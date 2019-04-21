@@ -1,33 +1,19 @@
-use core::{
-    ptr,
-    marker::PhantomData
-};
-use std::{
-    io,
-    ffi::OsStr,
-};
+use core::{marker::PhantomData, ptr};
+use std::{ffi::OsStr, io};
 use winapi::{
-    shared::{
-        guiddef::GUID,
-        windef::HWND,
-        minwindef::*,
-    },
-    um::{
-        setupapi::*,
-        handleapi::*,
-        winnt::PCWSTR,
-    },
+    shared::{guiddef::GUID, minwindef::*, windef::HWND},
+    um::{handleapi::*, setupapi::*, winnt::PCWSTR},
 };
 
 #[derive(Debug, Clone)]
 pub struct DeviceInfoSet {
-    handle: HDEVINFO
+    handle: HDEVINFO,
 }
 
 impl DeviceInfoSet {
-    pub fn iter<'set, 'b, 'g>(&'set self) -> DeviceInfoIter<'b, 'g> 
-    where 
-        'set: 'b + 'g 
+    pub fn iter<'set, 'b, 'g>(&'set self) -> DeviceInfoIter<'b, 'g>
+    where
+        'set: 'b + 'g,
     {
         DeviceInfoIter {
             handle: self.handle,
@@ -47,9 +33,7 @@ impl Drop for DeviceInfoSet {
     }
 }
 
-pub struct DeviceInfo {
-
-}
+pub struct DeviceInfo {}
 
 #[derive(Debug)]
 pub struct DeviceInfoIter<'b, 'g> {
@@ -87,8 +71,8 @@ pub struct Interface;
 
 #[derive(Debug)]
 pub struct GetOptions<TARGET> {
-    class_guid: *const GUID, 
-    enumerator: PCWSTR, 
+    class_guid: *const GUID,
+    enumerator: PCWSTR,
     hwnd_parent: HWND,
     flags: DWORD,
     _typestate: PhantomData<TARGET>,
@@ -104,7 +88,7 @@ impl<TARGET> GetOptions<TARGET> {
             _typestate: PhantomData,
         }
     }
-    
+
     pub unsafe fn flags(&mut self, flags: DWORD) -> &mut Self {
         self.flags = flags;
         self
@@ -133,15 +117,15 @@ impl<TARGET> GetOptions<TARGET> {
     pub fn enumerator(&mut self, enumerator: &OsStr) -> &mut Self {
         self.enumerator = enumerator as *const _ as *const u16;
         self
-    } 
-    
+    }
+
     pub fn get(&self) -> io::Result<DeviceInfoSet> {
         let handle = unsafe {
             SetupDiGetClassDevsW(
                 self.class_guid,
                 self.enumerator,
                 self.hwnd_parent,
-                self.flags
+                self.flags,
             )
         };
         if handle == INVALID_HANDLE_VALUE {
@@ -149,7 +133,7 @@ impl<TARGET> GetOptions<TARGET> {
         } else {
             Ok(DeviceInfoSet { handle })
         }
-    } 
+    }
 }
 
 impl GetOptions<Device> {
