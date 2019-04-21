@@ -1,4 +1,4 @@
-use core::{marker::PhantomData, ptr};
+use core::{marker::PhantomData, ptr, mem};
 use std::{ffi::OsStr, io};
 use winapi::{
     shared::{guiddef::GUID, minwindef::*, windef::HWND},
@@ -15,15 +15,7 @@ impl DeviceInfoSet {
     where
         'set: 'b + 'g,
     {
-        DeviceInfoIter {
-            handle: self.handle,
-            iter_index: 0,
-            interface_class_guid: core::ptr::null(),
-            _lifetime_of_guid: PhantomData,
-            buffer: core::ptr::null_mut(),
-            buf_len: 0,
-            _lifetime_of_buffer: PhantomData,
-        }
+        DeviceInfoIter::from_handle(self.handle)
     }
 }
 
@@ -35,15 +27,36 @@ impl Drop for DeviceInfoSet {
 
 pub struct DeviceInfo {}
 
-#[derive(Debug)]
 pub struct DeviceInfoIter<'b, 'g> {
     handle: HDEVINFO,
     iter_index: DWORD,
     interface_class_guid: *const GUID,
     _lifetime_of_guid: PhantomData<&'g ()>,
+    devinfo_data: SP_DEVINFO_DATA,
     buffer: PSP_DEVICE_INTERFACE_DETAIL_DATA_W,
     buf_len: DWORD,
     _lifetime_of_buffer: PhantomData<&'b ()>,
+}
+
+impl<'b, 'g> DeviceInfoIter<'b, 'g> {
+    fn from_handle(handle: HDEVINFO) -> DeviceInfoIter<'b, 'g> {
+        DeviceInfoIter {
+            handle: handle,
+            iter_index: 0,
+            interface_class_guid: core::ptr::null(),
+            _lifetime_of_guid: PhantomData,
+            devinfo_data: create_sp_devinfo_data(),
+            buffer: core::ptr::null_mut(),
+            buf_len: 0,
+            _lifetime_of_buffer: PhantomData,
+        }
+    }
+}
+
+fn create_sp_devinfo_data() -> SP_DEVINFO_DATA {
+    let mut ans = unsafe { mem::uninitialized::<SP_DEVINFO_DATA>() };
+    ans.cbSize = mem::size_of::<SP_DEVINFO_DATA>() as DWORD;
+    ans
 }
 
 impl<'g> DeviceInfoIter<'_, 'g> {
@@ -57,10 +70,13 @@ impl<'b, 'g> Iterator for DeviceInfoIter<'b, 'g> {
     type Item = &'b DeviceInfo;
 
     fn next(&mut self) -> Option<Self::Item> {
-        // SetupDiGetDeviceInterfaceDetailW(
+        // let ans = unsafe { SetupDiEnumDeviceInterfaces(
         //     self.handle,
-
-        // )
+        //     core::ptr::null_mut(),
+        //     self.interface_class_guid,
+        //     self.iter_index,
+        //     self.
+        // ) };
         unimplemented!()
     }
 }
