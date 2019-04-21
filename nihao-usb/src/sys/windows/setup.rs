@@ -1,8 +1,8 @@
-use core::{marker::PhantomData, ptr, mem};
+use core::{iter::*, marker::PhantomData, ptr, mem};
 use std::{ffi::OsStr, io};
 use winapi::{
-    shared::{guiddef::GUID, minwindef::*, windef::HWND},
-    um::{handleapi::*, setupapi::*, winnt::PCWSTR},
+    shared::{guiddef::GUID, minwindef::*, windef::HWND, winerror::*},
+    um::{handleapi::*, setupapi::*, errhandlingapi::*, winnt::PCWSTR},
 };
 
 #[derive(Debug, Clone)]
@@ -11,11 +11,11 @@ pub struct DeviceInfoSet {
 }
 
 impl DeviceInfoSet {
-    pub fn iter<'set, 'b, 'g>(&'set self) -> DeviceInfoIter<'b, 'g>
+    pub fn iter<'set, 'b, 'g>(&'set self, guid: &'g GUID) -> DeviceInfoIter<'b, 'g>
     where
         'set: 'b + 'g,
     {
-        DeviceInfoIter::from_handle(self.handle)
+        DeviceInfoIter::from_handle_guid(self.handle, guid)
     }
 }
 
@@ -25,27 +25,30 @@ impl Drop for DeviceInfoSet {
     }
 }
 
-pub struct DeviceInfo {}
+#[derive(Debug)]
+pub struct DeviceInfo {
+
+}
 
 pub struct DeviceInfoIter<'b, 'g> {
     handle: HDEVINFO,
     iter_index: DWORD,
-    interface_class_guid: *const GUID,
+    interface_class_guid: *const GUID, // must be non-null
     _lifetime_of_guid: PhantomData<&'g ()>,
-    devinfo_data: SP_DEVINFO_DATA,
+    dev_interface_data: SP_DEVICE_INTERFACE_DATA,
     buffer: PSP_DEVICE_INTERFACE_DETAIL_DATA_W,
     buf_len: DWORD,
     _lifetime_of_buffer: PhantomData<&'b ()>,
 }
 
 impl<'b, 'g> DeviceInfoIter<'b, 'g> {
-    fn from_handle(handle: HDEVINFO) -> DeviceInfoIter<'b, 'g> {
+    fn from_handle_guid(handle: HDEVINFO, guid: &'g GUID) -> DeviceInfoIter<'b, 'g> {
         DeviceInfoIter {
             handle: handle,
             iter_index: 0,
-            interface_class_guid: core::ptr::null(),
+            interface_class_guid: guid as *const _,
             _lifetime_of_guid: PhantomData,
-            devinfo_data: create_sp_devinfo_data(),
+            dev_interface_data: create_sp_dev_interface_data(),
             buffer: core::ptr::null_mut(),
             buf_len: 0,
             _lifetime_of_buffer: PhantomData,
@@ -53,33 +56,35 @@ impl<'b, 'g> DeviceInfoIter<'b, 'g> {
     }
 }
 
-fn create_sp_devinfo_data() -> SP_DEVINFO_DATA {
-    let mut ans = unsafe { mem::uninitialized::<SP_DEVINFO_DATA>() };
-    ans.cbSize = mem::size_of::<SP_DEVINFO_DATA>() as DWORD;
+fn create_sp_dev_interface_data() -> SP_DEVICE_INTERFACE_DATA {
+    let mut ans = unsafe { mem::uninitialized::<SP_DEVICE_INTERFACE_DATA>() };
+    ans.cbSize = mem::size_of::<SP_DEVICE_INTERFACE_DATA>() as DWORD;
     ans
 }
 
-impl<'g> DeviceInfoIter<'_, 'g> {
-    pub fn filter_class_guid(&mut self, class_guid: &'g GUID) -> &mut Self {
-        self.interface_class_guid = class_guid as *const _;
-        self
-    }
-}
-
 impl<'b, 'g> Iterator for DeviceInfoIter<'b, 'g> {
-    type Item = &'b DeviceInfo;
+    type Item = io::Result<DeviceInfo>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        // let ans = unsafe { SetupDiEnumDeviceInterfaces(
-        //     self.handle,
-        //     core::ptr::null_mut(),
-        //     self.interface_class_guid,
-        //     self.iter_index,
-        //     self.
-        // ) };
-        unimplemented!()
+        let ans = unsafe { SetupDiEnumDeviceInterfaces(
+            self.handle,
+            core::ptr::null_mut(), 
+            self.interface_class_guid,
+            self.iter_index,
+            &self.dev_interface_data as *const _ as *mut _,
+        ) };
+        if ans == FALSE {
+            return if unsafe { GetLastError() } == ERROR_NO_MORE_ITEMS { None } 
+            else { Some(Err(io::Error::last_os_error())) };
+        }
+        self.iter_index += 1;
+        // todo unimplemented
+        Some(Err(io::Error::last_os_error()))
+        // None
     }
 }
+
+impl<'b, 'g> FusedIterator for DeviceInfoIter<'b, 'g> {}
 
 pub struct Device;
 
