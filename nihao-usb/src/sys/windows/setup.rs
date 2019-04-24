@@ -91,7 +91,7 @@ pub struct Device;
 pub struct Interface;
 
 #[derive(Debug)]
-pub struct GetOptions<TARGET> {
+pub struct ListOptions<TARGET> {
     class_guid: *const GUID,
     enumerator: PCWSTR,
     hwnd_parent: HWND,
@@ -99,7 +99,7 @@ pub struct GetOptions<TARGET> {
     _typestate: PhantomData<TARGET>,
 }
 
-impl<TARGET> GetOptions<TARGET> {
+impl<TARGET> ListOptions<TARGET> {
     pub const unsafe fn new_unchecked() -> Self {
         Self {
             class_guid: ptr::null(),
@@ -140,7 +140,7 @@ impl<TARGET> GetOptions<TARGET> {
         self
     }
 
-    pub fn get(&self) -> io::Result<DeviceInfoSet> {
+    pub fn list(&self) -> io::Result<DeviceInfoSet> {
         let handle = unsafe {
             SetupDiGetClassDevsW(
                 self.class_guid,
@@ -157,8 +157,8 @@ impl<TARGET> GetOptions<TARGET> {
     }
 }
 
-impl GetOptions<Device> {
-    pub const fn all_devices() -> GetOptions<Device> {
+impl ListOptions<Device> {
+    pub const fn all_devices() -> ListOptions<Device> {
         Self {
             class_guid: ptr::null(),
             enumerator: ptr::null(),
@@ -179,8 +179,8 @@ impl GetOptions<Device> {
     }
 }
 
-impl GetOptions<Interface> {
-    pub const fn all_interfaces() -> GetOptions<Interface> {
+impl ListOptions<Interface> {
+    pub const fn all_interfaces() -> ListOptions<Interface> {
         Self {
             class_guid: ptr::null(),
             enumerator: ptr::null(),
@@ -190,7 +190,7 @@ impl GetOptions<Interface> {
         }
     }
 
-    pub const fn interface_by_class(class_guid: &GUID) -> GetOptions<Interface> {
+    pub const fn interface_by_class(class_guid: &GUID) -> ListOptions<Interface> {
         Self {
             class_guid: class_guid as *const _,
             enumerator: ptr::null(),
