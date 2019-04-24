@@ -1,11 +1,6 @@
-// may contain nothing 
-pub struct Context { ... }
-
-impl Context {
-    pub fn new() -> Self { ... }
-    pub fn devices<'a>(&'a self) 
-        -> io::Result<Devices<'a>> { ... }
-}
+// get an iterator if an operating system is present
+pub fn devices<'a>(&'a self) 
+    -> io::Result<Devices<'a>> { ... }
 
 // release the whole context
 impl Drop for Context { ... }
