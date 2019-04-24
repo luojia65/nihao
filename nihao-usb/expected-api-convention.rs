@@ -2,9 +2,6 @@
 pub fn devices<'a>(&'a self) 
     -> io::Result<Devices<'a>> { ... }
 
-// release the whole context
-impl Drop for Context { ... }
-
 // contains setup search handle, current index 
 // as well as a pointer to the shared buffer 
 pub struct Devices<'a> { ... }  
