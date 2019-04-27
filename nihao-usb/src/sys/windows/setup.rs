@@ -13,10 +13,7 @@ pub struct DeviceInfoList {
 
 impl DeviceInfoList {
     #[inline]
-    pub fn iter<'set, 'iter>(&'set self, guid: &'iter GUID) -> DeviceInfoIter<'iter>
-    where
-        'iter: 'set,
-    {
+    pub fn iter<'a>(&'a self, guid: &'a GUID) -> DeviceInfoIter<'a> {
         DeviceInfoIter::from_handle_guid(self.handle_dev_info, guid)
     }
 }
