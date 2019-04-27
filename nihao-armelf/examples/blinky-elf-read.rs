@@ -1,6 +1,6 @@
 use std::{
+    fs::OpenOptions,
     io::{Read, Seek, SeekFrom},
-    fs::OpenOptions
 };
 
 const MAGIC: [u8; 4] = [0x7f, 0x45, 0x4c, 0x46];
