@@ -6,7 +6,7 @@ fn main() -> io::Result<()> {
         .present()
         .list()?;
     for ans in device_info_set.iter(&GUID_DEVINTERFACE_USB_DEVICE) {
-        println!("{:?}", ans?);
+        println!("{:?}", ans);
     }
     Ok(())
 }

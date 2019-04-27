@@ -136,7 +136,7 @@ impl<'iter> Iterator for DeviceInfoIter<'iter> {
                     if self.detail_ptr == core::ptr::null_mut() {
                         LocalAlloc(LPTR, self.detail_len as usize) as *mut _
                     } else {
-                        LocalReAlloc(self.detail_ptr as *mut _, self.detail_len as usize, LPTR)
+                        LocalReAlloc(self.detail_ptr as *mut _, self.detail_len as usize, LMEM_MOVEABLE)
                             as *mut _
                     }
                 };
