@@ -1,9 +1,9 @@
-use core::{iter::*, marker::PhantomData, fmt, mem, ptr};
-use std::{ffi::*, io};
+use core::{fmt, iter::*, marker::PhantomData, mem, ptr};
 use std::os::windows::ffi::OsStringExt;
+use std::{ffi::*, io};
 use winapi::{
     shared::{guiddef::GUID, minwindef::*, windef::HWND, winerror::*},
-    um::{errhandlingapi::*, handleapi::*, minwinbase::*, setupapi::*, winbase::*, winnt::*},
+    um::{errhandlingapi::*, handleapi::*, heapapi::*, setupapi::*, winnt::*},
 };
 
 #[derive(Debug, Clone)]
@@ -14,7 +14,9 @@ pub struct DeviceInfoList {
 impl DeviceInfoList {
     #[inline]
     pub fn iter<'set, 'iter>(&'set self, guid: &'iter GUID) -> DeviceInfoIter<'iter>
-    where 'iter: 'set {
+    where
+        'iter: 'set,
+    {
         DeviceInfoIter::from_handle_guid(self.handle_dev_info, guid)
     }
 }
@@ -37,7 +39,7 @@ impl<'p> DeviceInfo<'p> {
         DeviceInfo {
             path_ptr,
             path_len_in_u16,
-            _lifetime_of_path: PhantomData
+            _lifetime_of_path: PhantomData,
         }
     }
 }
@@ -45,10 +47,8 @@ impl<'p> DeviceInfo<'p> {
 impl fmt::Debug for DeviceInfo<'_> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         // todo: more graceful code
-        let slice = unsafe { core::slice::from_raw_parts(
-            self.path_ptr,
-            self.path_len_in_u16 as usize,
-        ) };  
+        let slice =
+            unsafe { core::slice::from_raw_parts(self.path_ptr, self.path_len_in_u16 as usize) };
         write!(f, "{:?}", OsString::from_wide(slice))
     }
 }
@@ -91,8 +91,9 @@ fn create_sp_dev_interface_data() -> SP_DEVICE_INTERFACE_DATA {
 impl<'iter> Drop for DeviceInfoIter<'iter> {
     fn drop(&mut self) {
         if self.detail_ptr != core::ptr::null_mut() {
-            unsafe { LocalFree(self.detail_ptr as *mut _) };
-        }   
+            let heap_handle = unsafe { GetProcessHeap() };
+            unsafe { HeapFree(heap_handle, 0, self.detail_ptr as *mut _) };
+        }
     }
 }
 
@@ -132,15 +133,23 @@ impl<'iter> Iterator for DeviceInfoIter<'iter> {
                 break;
             }
             if unsafe { GetLastError() } == ERROR_INSUFFICIENT_BUFFER {
+                let heap_handle = unsafe { GetProcessHeap() };
                 self.detail_ptr = unsafe {
                     if self.detail_ptr == core::ptr::null_mut() {
-                        LocalAlloc(LPTR, self.detail_len as usize) as *mut _
+                        HeapAlloc(heap_handle, 0, self.detail_len as usize) as *mut _
                     } else {
-                        LocalReAlloc(self.detail_ptr as *mut _, self.detail_len as usize, LMEM_MOVEABLE)
-                            as *mut _
+                        HeapReAlloc(
+                            heap_handle,
+                            0,
+                            self.detail_ptr as *mut _,
+                            self.detail_len as usize,
+                        ) as *mut _
                     }
                 };
-                unsafe { (*self.detail_ptr).cbSize = core::mem::size_of::<PSP_DEVICE_INTERFACE_DETAIL_DATA_W>() as DWORD };
+                unsafe {
+                    (*self.detail_ptr).cbSize =
+                        core::mem::size_of::<PSP_DEVICE_INTERFACE_DETAIL_DATA_W>() as DWORD
+                };
                 self.detail_cap = self.detail_len;
             } else {
                 return Some(Err(io::Error::last_os_error()));
@@ -149,7 +158,7 @@ impl<'iter> Iterator for DeviceInfoIter<'iter> {
         self.iter_index += 1;
         let ret = DeviceInfo::from_device_path(
             unsafe { &(*self.detail_ptr).DevicePath as *const _ },
-            (self.detail_len / 2) - 3 // path_len_in_u16
+            (self.detail_len / 2) - 3, // path_len_in_u16
         );
         Some(Ok(ret))
     }
