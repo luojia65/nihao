@@ -39,14 +39,19 @@ impl<'p> DeviceInfo<'p> {
             _lifetime_of_path: PhantomData,
         }
     }
+
+    /// Copies the path slice into an owned OsString.
+    pub fn to_os_string(&self) -> OsString {
+        OsString::from_wide(unsafe { core::slice::from_raw_parts(
+            self.path_ptr,
+            self.path_len_in_u16 as usize
+        ) })
+    } 
 }
 
 impl fmt::Debug for DeviceInfo<'_> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        // todo: more graceful code
-        let slice =
-            unsafe { core::slice::from_raw_parts(self.path_ptr, self.path_len_in_u16 as usize) };
-        write!(f, "{:?}", OsString::from_wide(slice))
+        write!(f, "{:?}", self.to_os_string())
     }
 }
 
