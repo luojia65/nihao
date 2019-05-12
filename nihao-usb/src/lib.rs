@@ -1,5 +1,7 @@
 pub mod sys;
 
+use core::iter::FusedIterator;
+
 use std::io;
 
 /// Get an `Iterator` over all USB devices identified by your operating system.
@@ -28,6 +30,8 @@ impl<'iter> Iterator for Devices<'iter> {
 }
 
 impl ExactSizeIterator for Devices<'_> {}
+
+impl FusedIterator for Devices<'_> {}
 
 /// A path struct representing a certain USB device connected to underlying OS.
 #[derive(Debug, Clone, Hash, Eq, PartialEq)]
