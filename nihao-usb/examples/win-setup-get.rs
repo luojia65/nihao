@@ -1,4 +1,4 @@
-use nihao_usb::sys::windows::{setup::ListOptions, usb::{ListOptionsExt, *}};
+use nihao_usb::sys::windows::{setup::ListOptions, usb::ListOptionsExt};
 use std::io;
 
 fn main() -> io::Result<()> {
