@@ -27,6 +27,7 @@ impl Drop for InfoHandle {
     }
 }
 
+#[derive(Clone)]
 pub struct Info<'p> {
     path_ptr: LPCWSTR,
     path_len_in_u16: DWORD,
@@ -49,6 +50,10 @@ impl<'p> Info<'p> {
             self.path_len_in_u16 as usize
         ) })
     } 
+
+    pub fn path_ptr(&self) -> LPCWSTR {
+        self.path_ptr
+    }
 }
 
 impl fmt::Debug for Info<'_> {
@@ -57,6 +62,7 @@ impl fmt::Debug for Info<'_> {
     }
 }
 
+#[derive(Clone)]
 pub struct InfoIter<'iter> {
     handle_dev_info: HDEVINFO,
     iter_index: DWORD,
@@ -82,6 +88,18 @@ impl<'iter> InfoIter<'iter> {
             detail_cap: 0,
             _lifetime_of_detail: PhantomData,
         }
+    }
+}
+
+impl fmt::Debug for InfoIter<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.debug_struct("InfoIter")
+            .field("handle_dev_info", &self.handle_dev_info)
+            .field("iter_index", &self.iter_index)
+            .field("detail_ptr", &self.detail_ptr)
+            .field("detail_len", &self.detail_len)
+            .field("detail_cap", &self.detail_cap)
+            .finish()
     }
 }
 
