@@ -5,7 +5,7 @@ fn main() -> io::Result<()> {
     let info_handle = ListOptions::all_usb_interfaces()
         .present()
         .list()?;
-    for ans in info_handle.iter(&GUID_DEVINTERFACE_USB_DEVICE) {
+    for ans in info_handle.iter() {
         println!("{:?}", ans);
     }
     Ok(())

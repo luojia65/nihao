@@ -6,6 +6,8 @@ use winapi::{
     um::{errhandlingapi::*, handleapi::*, heapapi::*, setupapi::*, winnt::*},
 };
 
+pub use winapi::um::setupapi::HDEVINFO;
+
 #[derive(Debug, Clone)]
 pub struct InfoHandle {
     handle_dev_info: HDEVINFO,
@@ -173,15 +175,16 @@ pub struct Device;
 pub struct Interface;
 
 #[derive(Debug)]
-pub struct ListOptions<TARGET> {
+pub struct ListOptions<TYPE, OUTPUT> {
     class_guid: *const GUID,
     enumerator: PCWSTR,
     hwnd_parent: HWND,
     flags: DWORD,
-    _typestate: PhantomData<TARGET>,
+    _typestate: PhantomData<TYPE>,
+    _output: PhantomData<OUTPUT>,
 }
 
-impl<TARGET> ListOptions<TARGET> {
+impl<TYPE, OUTPUT> ListOptions<TYPE, OUTPUT> {
     #[inline]
     pub const unsafe fn new_unchecked() -> Self {
         Self {
@@ -190,6 +193,7 @@ impl<TARGET> ListOptions<TARGET> {
             hwnd_parent: ptr::null_mut(),
             flags: 0,
             _typestate: PhantomData,
+            _output: PhantomData,
         }
     }
 
@@ -228,9 +232,14 @@ impl<TARGET> ListOptions<TARGET> {
         self.enumerator = enumerator as *const _ as *const u16;
         self
     }
+}
 
+impl<TYPE, OUTPUT> ListOptions<TYPE, OUTPUT> 
+where 
+    OUTPUT: From<InfoHandle>
+{
     #[inline]
-    pub fn list(&self) -> io::Result<InfoHandle> {
+    pub fn list(&self) -> io::Result<OUTPUT> {
         let handle_dev_info = unsafe {
             SetupDiGetClassDevsW(
                 self.class_guid,
@@ -242,20 +251,21 @@ impl<TARGET> ListOptions<TARGET> {
         if handle_dev_info == INVALID_HANDLE_VALUE {
             Err(io::Error::last_os_error())
         } else {
-            Ok(InfoHandle { handle_dev_info })
+            Ok(OUTPUT::from(InfoHandle { handle_dev_info }))
         }
     }
 }
 
-impl ListOptions<Device> {
+impl<OUTPUT> ListOptions<Device, OUTPUT> {
     #[inline]
-    pub const fn all_devices() -> ListOptions<Device> {
+    pub const fn all_devices() -> ListOptions<Device, OUTPUT> {
         Self {
             class_guid: ptr::null(),
             enumerator: ptr::null(),
             hwnd_parent: ptr::null_mut(),
             flags: DIGCF_ALLCLASSES,
             _typestate: PhantomData,
+            _output: PhantomData,
         }
     }
 
@@ -267,30 +277,33 @@ impl ListOptions<Device> {
             hwnd_parent: ptr::null_mut(),
             flags: 0,
             _typestate: PhantomData,
+            _output: PhantomData,
         }
     }
 }
 
-impl ListOptions<Interface> {
+impl<OUTPUT> ListOptions<Interface, OUTPUT> {
     #[inline]
-    pub const fn all_interfaces() -> ListOptions<Interface> {
+    pub const fn all_interfaces() -> ListOptions<Interface, OUTPUT> {
         Self {
             class_guid: ptr::null(),
             enumerator: ptr::null(),
             hwnd_parent: ptr::null_mut(),
             flags: DIGCF_DEVICEINTERFACE | DIGCF_ALLCLASSES,
             _typestate: PhantomData,
+            _output: PhantomData,
         }
     }
 
     #[inline]
-    pub const fn interface_by_class(class_guid: &GUID) -> ListOptions<Interface> {
+    pub const fn interface_by_class(class_guid: &GUID) -> ListOptions<Interface, OUTPUT> {
         Self {
             class_guid: class_guid as *const _,
             enumerator: ptr::null(),
             hwnd_parent: ptr::null_mut(),
             flags: DIGCF_DEVICEINTERFACE,
             _typestate: PhantomData,
+            _output: PhantomData,
         }
     }
 
