@@ -7,33 +7,33 @@ use winapi::{
 };
 
 #[derive(Debug, Clone)]
-pub struct DeviceInfoList {
+pub struct InfoHandle {
     handle_dev_info: HDEVINFO,
 }
 
-impl DeviceInfoList {
+impl InfoHandle {
     #[inline]
-    pub fn iter<'a>(&'a self, guid: &'a GUID) -> DeviceInfoIter<'a> {
-        DeviceInfoIter::from_handle_guid(self.handle_dev_info, guid)
+    pub fn iter<'a>(&'a self, guid: &'a GUID) -> InfoIter<'a> {
+        InfoIter::from_handle_guid(self.handle_dev_info, guid)
     }
 }
 
-impl Drop for DeviceInfoList {
+impl Drop for InfoHandle {
     #[inline]
     fn drop(&mut self) {
         unsafe { SetupDiDestroyDeviceInfoList(self.handle_dev_info) };
     }
 }
 
-pub struct DeviceInfo<'p> {
+pub struct Info<'p> {
     path_ptr: LPCWSTR,
     path_len_in_u16: DWORD,
     _lifetime_of_path: PhantomData<&'p ()>,
 }
 
-impl<'p> DeviceInfo<'p> {
+impl<'p> Info<'p> {
     fn from_device_path(path_ptr: LPCWSTR, path_len_in_u16: DWORD) -> Self {
-        DeviceInfo {
+        Info {
             path_ptr,
             path_len_in_u16,
             _lifetime_of_path: PhantomData,
@@ -49,13 +49,13 @@ impl<'p> DeviceInfo<'p> {
     } 
 }
 
-impl fmt::Debug for DeviceInfo<'_> {
+impl fmt::Debug for Info<'_> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{:?}", self.to_os_string())
     }
 }
 
-pub struct DeviceInfoIter<'iter> {
+pub struct InfoIter<'iter> {
     handle_dev_info: HDEVINFO,
     iter_index: DWORD,
     interface_class_guid: *const GUID, // must be non-null
@@ -67,9 +67,9 @@ pub struct DeviceInfoIter<'iter> {
     _lifetime_of_detail: PhantomData<&'iter ()>,
 }
 
-impl<'iter> DeviceInfoIter<'iter> {
-    fn from_handle_guid(handle_dev_info: HDEVINFO, guid: &'iter GUID) -> DeviceInfoIter<'iter> {
-        DeviceInfoIter {
+impl<'iter> InfoIter<'iter> {
+    fn from_handle_guid(handle_dev_info: HDEVINFO, guid: &'iter GUID) -> InfoIter<'iter> {
+        InfoIter {
             handle_dev_info: handle_dev_info,
             iter_index: 0,
             interface_class_guid: guid as *const _,
@@ -90,7 +90,7 @@ fn create_sp_dev_interface_data() -> SP_DEVICE_INTERFACE_DATA {
     ans
 }
 
-impl<'iter> Drop for DeviceInfoIter<'iter> {
+impl<'iter> Drop for InfoIter<'iter> {
     fn drop(&mut self) {
         if self.detail_ptr != core::ptr::null_mut() {
             let heap_handle = unsafe { GetProcessHeap() };
@@ -99,8 +99,8 @@ impl<'iter> Drop for DeviceInfoIter<'iter> {
     }
 }
 
-impl<'iter> Iterator for DeviceInfoIter<'iter> {
-    type Item = io::Result<DeviceInfo<'iter>>;
+impl<'iter> Iterator for InfoIter<'iter> {
+    type Item = io::Result<Info<'iter>>;
 
     #[inline]
     fn next(&mut self) -> Option<Self::Item> {
@@ -158,7 +158,7 @@ impl<'iter> Iterator for DeviceInfoIter<'iter> {
             }
         }
         self.iter_index += 1;
-        let ret = DeviceInfo::from_device_path(
+        let ret = Info::from_device_path(
             unsafe { &(*self.detail_ptr).DevicePath as *const _ },
             (self.detail_len / 2) - 3, // path_len_in_u16
         );
@@ -166,7 +166,7 @@ impl<'iter> Iterator for DeviceInfoIter<'iter> {
     }
 }
 
-impl<'iter> FusedIterator for DeviceInfoIter<'iter> {}
+impl<'iter> FusedIterator for InfoIter<'iter> {}
 
 pub struct Device;
 
@@ -230,7 +230,7 @@ impl<TARGET> ListOptions<TARGET> {
     }
 
     #[inline]
-    pub fn list(&self) -> io::Result<DeviceInfoList> {
+    pub fn list(&self) -> io::Result<InfoHandle> {
         let handle_dev_info = unsafe {
             SetupDiGetClassDevsW(
                 self.class_guid,
@@ -242,7 +242,7 @@ impl<TARGET> ListOptions<TARGET> {
         if handle_dev_info == INVALID_HANDLE_VALUE {
             Err(io::Error::last_os_error())
         } else {
-            Ok(DeviceInfoList { handle_dev_info })
+            Ok(InfoHandle { handle_dev_info })
         }
     }
 }
