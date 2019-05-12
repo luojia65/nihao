@@ -35,8 +35,13 @@ pub struct Device<'device> {
     info: usb::Info<'device>,
 }
 
-// impl<'device> Device<'device> {
-//     pub fn connect(&self) -> io::Result<Stream> {
-//         self.info.open()
-//     }
-// }
+impl<'device> Device<'device> {
+    pub fn open(&self) -> io::Result<Handle> {
+        self.info.open().map(|handle| Handle { handle })
+    }
+}
+
+#[derive(Debug, Clone, Hash, Eq, PartialEq)]
+pub struct Handle {
+    handle: usb::WinUsbHandle
+}

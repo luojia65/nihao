@@ -39,6 +39,17 @@ pub struct Device<'device> {
     inner: sys::Device<'device>,
 }
 
+impl<'device> Device<'device> {
+    pub fn open(&self) -> io::Result<Handle> {
+        self.inner.open().map(|inner| Handle { inner })
+    }
+}
+
+#[derive(Debug, Clone, Hash, Eq, PartialEq)]
+pub struct Handle {
+    inner: sys::Handle,
+}
+
 /// A `DeviceDescriptor` describing what this name represents in the USB specification
 #[derive(Debug, Clone, Hash, Eq, PartialEq)]
 pub struct DeviceDescriptor {
