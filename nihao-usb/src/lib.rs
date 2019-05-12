@@ -50,6 +50,12 @@ pub struct Handle {
     inner: sys::Handle,
 }
 
+impl Handle {
+    pub fn device_descriptor(&self) -> DeviceDescriptor {
+        self.inner.device_descriptor()
+    }
+}
+
 /// A `DeviceDescriptor` describing what this name represents in the USB specification
 #[derive(Debug, Clone, Hash, Eq, PartialEq)]
 pub struct DeviceDescriptor {

@@ -45,3 +45,9 @@ impl<'device> Device<'device> {
 pub struct Handle {
     handle: usb::WinUsbHandle
 }
+
+impl Handle {
+    pub fn device_descriptor(&self) -> crate::DeviceDescriptor {
+        self.handle.device_descriptor()
+    }
+}
