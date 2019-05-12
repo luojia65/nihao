@@ -12,7 +12,7 @@ pub use winapi::um::setupapi::HDEVINFO;
 pub struct InfoHandle {
     handle_dev_info: HDEVINFO,
 }
-
+ 
 impl InfoHandle {
     #[inline]
     pub fn iter<'a>(&'a self, guid: &'a GUID) -> InfoIter<'a> {
@@ -198,8 +198,8 @@ pub struct ListOptions<TYPE, OUTPUT> {
     enumerator: PCWSTR,
     hwnd_parent: HWND,
     flags: DWORD,
-    _typestate: PhantomData<TYPE>,
-    _output: PhantomData<OUTPUT>,
+    _typestate_setup_type: PhantomData<TYPE>,
+    _typestate_output: PhantomData<OUTPUT>,
 }
 
 impl<TYPE, OUTPUT> ListOptions<TYPE, OUTPUT> {
@@ -210,8 +210,8 @@ impl<TYPE, OUTPUT> ListOptions<TYPE, OUTPUT> {
             enumerator: ptr::null(),
             hwnd_parent: ptr::null_mut(),
             flags: 0,
-            _typestate: PhantomData,
-            _output: PhantomData,
+            _typestate_setup_type: PhantomData,
+            _typestate_output: PhantomData,
         }
     }
 
@@ -282,8 +282,8 @@ impl<OUTPUT> ListOptions<Device, OUTPUT> {
             enumerator: ptr::null(),
             hwnd_parent: ptr::null_mut(),
             flags: DIGCF_ALLCLASSES,
-            _typestate: PhantomData,
-            _output: PhantomData,
+            _typestate_setup_type: PhantomData,
+            _typestate_output: PhantomData,
         }
     }
 
@@ -294,8 +294,8 @@ impl<OUTPUT> ListOptions<Device, OUTPUT> {
             enumerator: ptr::null(),
             hwnd_parent: ptr::null_mut(),
             flags: 0,
-            _typestate: PhantomData,
-            _output: PhantomData,
+            _typestate_setup_type: PhantomData,
+            _typestate_output: PhantomData,
         }
     }
 }
@@ -308,8 +308,8 @@ impl<OUTPUT> ListOptions<Interface, OUTPUT> {
             enumerator: ptr::null(),
             hwnd_parent: ptr::null_mut(),
             flags: DIGCF_DEVICEINTERFACE | DIGCF_ALLCLASSES,
-            _typestate: PhantomData,
-            _output: PhantomData,
+            _typestate_setup_type: PhantomData,
+            _typestate_output: PhantomData,
         }
     }
 
@@ -320,8 +320,8 @@ impl<OUTPUT> ListOptions<Interface, OUTPUT> {
             enumerator: ptr::null(),
             hwnd_parent: ptr::null_mut(),
             flags: DIGCF_DEVICEINTERFACE,
-            _typestate: PhantomData,
-            _output: PhantomData,
+            _typestate_setup_type: PhantomData,
+            _typestate_output: PhantomData,
         }
     }
 
