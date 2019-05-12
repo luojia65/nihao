@@ -49,7 +49,7 @@ impl From<setup::InfoHandle> for InfoHandle {
 }
 
 impl InfoHandle {
-    pub fn iter<'a>(&'a self) -> InfoIter<'a> {
+    pub fn iter<'a>(&self) -> InfoIter<'a> {
         InfoIter { inner: self.inner.iter(&GUID_DEVINTERFACE_USB_DEVICE) }
     }
 }

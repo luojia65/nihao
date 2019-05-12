@@ -1,5 +1,7 @@
 pub mod sys;
 
+pub use sys::*;
+
 #[derive(Debug, Clone, Hash, Eq, PartialEq)]
 pub struct DeviceDescriptor {
     pub length: u8,

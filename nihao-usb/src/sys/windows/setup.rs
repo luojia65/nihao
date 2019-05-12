@@ -15,7 +15,7 @@ pub struct InfoHandle {
  
 impl InfoHandle {
     #[inline]
-    pub fn iter<'a>(&'a self, guid: &'a GUID) -> InfoIter<'a> {
+    pub fn iter<'a>(&self, guid: &'a GUID) -> InfoIter<'a> {
         InfoIter::from_handle_guid(self.handle_dev_info, guid)
     }
 }
