@@ -8,7 +8,7 @@ use winapi::{
 
 pub use winapi::um::setupapi::HDEVINFO;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Hash, Eq, PartialEq)]
 pub struct InfoHandle {
     handle_dev_info: HDEVINFO,
 }
@@ -27,7 +27,7 @@ impl Drop for InfoHandle {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Hash, Eq, PartialEq)]
 pub struct Info<'p> {
     path_ptr: LPCWSTR,
     path_len_in_u16: DWORD,

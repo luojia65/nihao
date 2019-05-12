@@ -1,7 +1,41 @@
 pub mod sys;
 
-pub use sys::*;
+use std::io;
 
+/// Get an `Iterator` over all USB devices identified by your operating system.
+/// 
+/// Note that the return value for this iterator is a `Result`.
+/// You may need to use a try operator `?` after the function call `devices()`
+/// if you want to iterate everything in it by using `for` statements. 
+/// That's because a `Result` is also an `Iterator`, and its `Item` is `Devices`
+/// other than `Device` expected.
+pub fn devices<'iter>() -> io::Result<Devices<'iter>> {
+    sys::devices().map(|inner| Devices { inner })
+}
+
+/// An `Iterator` for USB devices.
+#[derive(Debug, Clone)]
+pub struct Devices<'iter> {
+    inner: sys::Devices<'iter>,
+}
+
+impl<'iter> Iterator for Devices<'iter> {
+    type Item = io::Result<Device<'iter>>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.inner.next().map(|res| res.map(|inner| Device { inner }))
+    }
+}
+
+impl ExactSizeIterator for Devices<'_> {}
+
+/// A path struct representing a certain USB device connected to underlying OS.
+#[derive(Debug, Clone, Hash, Eq, PartialEq)]
+pub struct Device<'device> {
+    inner: sys::Device<'device>,
+}
+
+/// A `DeviceDescriptor` describing what this name represents in the USB specification
 #[derive(Debug, Clone, Hash, Eq, PartialEq)]
 pub struct DeviceDescriptor {
     pub length: u8,

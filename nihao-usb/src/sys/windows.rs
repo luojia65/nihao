@@ -11,7 +11,7 @@ pub fn devices<'iter>() -> io::Result<Devices<'iter>> {
     Ok(Devices { handle, iter: None })
 }
 
-#[derive(Debug, Clone)]//, Hash, Eq, PartialEq)]
+#[derive(Debug, Clone)]
 pub struct Devices<'iter> {
     handle: usb::InfoHandle,
     iter: Option<usb::InfoIter<'iter>>,
@@ -30,7 +30,7 @@ impl<'iter> Iterator for Devices<'iter> {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Hash, Eq, PartialEq)]
 pub struct Device<'device> {
     info: usb::Info<'device>,
 }

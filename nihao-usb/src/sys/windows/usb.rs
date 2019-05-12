@@ -37,7 +37,7 @@ impl ListOptionsExt for setup::ListOptions<setup::Interface, InfoHandle> {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Hash, Eq, PartialEq)]
 pub struct InfoHandle {
     inner: setup::InfoHandle,
 }
@@ -68,7 +68,7 @@ impl<'iter> Iterator for InfoIter<'iter> {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Hash, Eq, PartialEq)]
 pub struct Info<'a> {
     inner: setup::Info<'a>,
 }

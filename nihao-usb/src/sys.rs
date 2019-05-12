@@ -2,4 +2,4 @@
 pub mod windows;
 
 #[cfg(windows)]
-pub use windows::*;
+pub use windows::{devices, Devices, Device};
