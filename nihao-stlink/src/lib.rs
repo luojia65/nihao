@@ -18,10 +18,15 @@ impl<'iter> Iterator for Handles<'iter> {
     type Item = io::Result<Handle>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        self.inner.next().map(|r| r
-            .and_then(|d| d.open())
-            .and_then(|h| Handle::try_from(h).map_err(|(_h, err)| err.into()))
-        )
+        // self.inner.next().map(|r| r
+        //     .and_then(|d| d.open())
+        //     .and_then(|h| Handle::try_from(h).map_err(|(_h, err)| err.into()))
+        // )
+        while let Some(Ok(d)) = self.inner.next() {
+            let h = if let Ok(h) = d.open() { h } else { continue };
+            return Some(Handle::try_from(h).map_err(|(_h, err)| err.into()))
+        }
+        None
     }
 }
 
