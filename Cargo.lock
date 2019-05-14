@@ -7,6 +7,9 @@ version = "0.0.0"
 [[package]]
 name = "nihao-stlink"
 version = "0.0.0"
+dependencies = [
+ "nihao-usb 0.1.0",
+]
 
 [[package]]
 name = "nihao-usb"
