@@ -18,6 +18,8 @@ impl<'iter> Iterator for Handles<'iter> {
     type Item = io::Result<Handle>;
 
     fn next(&mut self) -> Option<Self::Item> {
+        // TODO: Which error should we drop or handle?
+
         // self.inner.next().map(|r| r
         //     .and_then(|d| d.open())
         //     .and_then(|h| Handle::try_from(h).map_err(|(_h, err)| err.into()))
