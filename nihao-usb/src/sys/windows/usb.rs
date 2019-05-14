@@ -111,12 +111,11 @@ impl WinUsbHandle {
     pub fn device_descriptor(&self) -> io::Result<DeviceDescriptor> {
         let desc: USB_DEVICE_DESCRIPTOR = unsafe { core::mem::zeroed() };
         let len = 0;
-        // Although this function only fails when handle is null which is impossible here
-        // and the boolean value returned is not needed, there could exist errors when, 
-        // for example, this device is plugged out during operation, when the descriptor 
-        // is actually not changed. 
+        // This function not only fails when handle is null (which is impossible here),
+        // but also fails when there being an error while reading.
+        // When this fails, `len` remains zero and `ans` is set `FALSE`.
         // ref: https://docs.microsoft.com/en-us/windows/desktop/api/winusb/nf-winusb-winusb_getdescriptor
-        unsafe { WinUsb_GetDescriptor(
+        let ans = unsafe { WinUsb_GetDescriptor(
             self.winusb_handle,
             USB_DEVICE_DESCRIPTOR_TYPE,
             0,
@@ -125,11 +124,7 @@ impl WinUsbHandle {
             core::mem::size_of::<USB_DEVICE_DESCRIPTOR>() as DWORD,
             &len as *const _ as *mut _
         ) };
-        // If the descriptor is not changed, the `len` variant remains zero. 
-        // I personally suggests to judge if this reading operation is successful by 
-        // validating if `len` does not equal to zero, otherwise return the error value.
-        // If there is a wiser way please fire an issue to let us know. Thanks! -- Luo Jia
-        if len == 0 {
+        if ans == FALSE {
             return Err(io::Error::last_os_error())
         }
         Ok(desc.into())
