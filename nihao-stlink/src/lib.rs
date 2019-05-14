@@ -25,9 +25,15 @@ impl<'iter> Iterator for Handles<'iter> {
         //     .and_then(|h| Handle::try_from(h).map_err(|(_h, err)| err.into()))
         // )
 
+        use TryFromHandleError::*;
         while let Some(Ok(d)) = self.inner.next() {
+            // unable to open, continue
             let h = if let Ok(h) = d.open() { h } else { continue };
-            return Some(Handle::try_from(h).map_err(|(_h, err)| err.into()))
+            match Handle::try_from(h) {
+                Ok(h) => return Some(Ok(h)),
+                Err((_h, IoError(e))) => return Some(Err(e)),
+                Err(_) => continue,
+            }
         }
         None
     }
