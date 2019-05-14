@@ -29,8 +29,6 @@ impl<'iter> Iterator for Devices<'iter> {
     }
 }
 
-impl ExactSizeIterator for Devices<'_> {}
-
 impl FusedIterator for Devices<'_> {}
 
 /// A path struct representing a certain USB device connected to underlying OS.

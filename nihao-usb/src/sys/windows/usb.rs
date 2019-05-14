@@ -1,3 +1,4 @@
+use core::iter::FusedIterator;
 use std::io;
 use super::setup;
 use crate::DeviceDescriptor;
@@ -69,6 +70,8 @@ impl<'iter> Iterator for InfoIter<'iter> {
         self.inner.next().map(|r| r.map(|i| Info { inner: i }))
     }
 }
+
+impl<'iter> FusedIterator for InfoIter<'iter> {}
 
 #[derive(Debug, Clone, Hash, Eq, PartialEq)]
 pub struct Info<'a> {

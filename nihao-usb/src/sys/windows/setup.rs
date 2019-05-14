@@ -62,14 +62,17 @@ impl fmt::Debug for Info<'_> {
     }
 }
 
+/// This iterator also manages a tiny heap buffer
+/// 
+/// TODO: is this exact sized?
 #[derive(Clone)]
 pub struct InfoIter<'iter> {
-    handle_dev_info: HDEVINFO,
+    handle_dev_info: HDEVINFO, // maybe reused, do NOT free here
     iter_index: DWORD,
     interface_class_guid: *const GUID, // must be non-null
     _lifetime_of_guid: PhantomData<&'iter ()>,
     dev_interface_data: SP_DEVICE_INTERFACE_DATA,
-    detail_ptr: PSP_DEVICE_INTERFACE_DETAIL_DATA_W,
+    detail_ptr: PSP_DEVICE_INTERFACE_DETAIL_DATA_W, 
     detail_len: DWORD, // size in u8, not in u16
     detail_cap: DWORD,
     _lifetime_of_detail: PhantomData<&'iter ()>,
@@ -189,8 +192,10 @@ impl<'iter> Iterator for InfoIter<'iter> {
 
 impl<'iter> FusedIterator for InfoIter<'iter> {}
 
+/// Typestate struct
 pub struct Device;
 
+/// Typestate struct
 pub struct Interface;
 
 #[derive(Debug)]
