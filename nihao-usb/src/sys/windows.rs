@@ -47,7 +47,7 @@ pub struct Handle {
 }
 
 impl Handle {
-    pub fn device_descriptor(&self) -> crate::DeviceDescriptor {
+    pub fn device_descriptor(&self) -> io::Result<crate::DeviceDescriptor> {
         self.handle.device_descriptor()
     }
 }

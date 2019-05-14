@@ -45,13 +45,17 @@ impl<'device> Device<'device> {
     }
 }
 
+/// A connection handle to the remote device.
+/// 
+/// Underlying code must ensure that this handle implements `Drop` and all relevant
+/// resources are freed during their `drop` operations.
 #[derive(Debug, Clone, Hash, Eq, PartialEq)]
 pub struct Handle {
     inner: sys::Handle,
 }
 
 impl Handle {
-    pub fn device_descriptor(&self) -> DeviceDescriptor {
+    pub fn device_descriptor(&self) -> io::Result<DeviceDescriptor> {
         self.inner.device_descriptor()
     }
 }

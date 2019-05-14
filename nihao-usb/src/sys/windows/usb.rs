@@ -14,7 +14,8 @@ use winapi::{
         fileapi::{CreateFileW, OPEN_EXISTING},
         handleapi::{CloseHandle, INVALID_HANDLE_VALUE},
         winusb::{
-            WinUsb_Initialize, WinUsb_GetDescriptor,
+            WinUsb_Initialize, WinUsb_Free,
+            WinUsb_GetDescriptor,
             WINUSB_INTERFACE_HANDLE
         },
     },
@@ -107,12 +108,13 @@ pub struct WinUsbHandle {
 }
 
 impl WinUsbHandle {
-    pub fn device_descriptor(&self) -> DeviceDescriptor {
+    pub fn device_descriptor(&self) -> io::Result<DeviceDescriptor> {
         let desc: USB_DEVICE_DESCRIPTOR = unsafe { core::mem::zeroed() };
         let len = 0;
-        // this function only fails when handle is null
-        // which is assured false by constructors of self
-        // so we do not need the boolean value returned
+        // Although this function only fails when handle is null which is impossible here
+        // and the boolean value returned is not needed, there could exist errors when, 
+        // for example, this device is plugged out during operation, when the descriptor 
+        // is actually not changed. 
         // ref: https://docs.microsoft.com/en-us/windows/desktop/api/winusb/nf-winusb-winusb_getdescriptor
         unsafe { WinUsb_GetDescriptor(
             self.winusb_handle,
@@ -123,7 +125,20 @@ impl WinUsbHandle {
             core::mem::size_of::<USB_DEVICE_DESCRIPTOR>() as DWORD,
             &len as *const _ as *mut _
         ) };
-        desc.into()
+        // If the descriptor is not changed, the `len` variant remains zero. 
+        // I personally suggests to judge if this reading operation is successful by 
+        // validating if `len` does not equal to zero, otherwise return the error value.
+        // If there is a wiser way please fire an issue to let us know. Thanks! -- Luo Jia
+        if len == 0 {
+            return Err(io::Error::last_os_error())
+        }
+        Ok(desc.into())
+    }
+}
+
+impl Drop for WinUsbHandle {
+    fn drop(&mut self) {
+        unsafe { WinUsb_Free(self.winusb_handle) };
     }
 }
 
