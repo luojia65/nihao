@@ -5,6 +5,7 @@ use crate::DeviceDescriptor;
 use winapi::{
     um::{
         winnt::{
+            HANDLE,
             GENERIC_READ, GENERIC_WRITE, 
             FILE_SHARE_READ, FILE_SHARE_WRITE,
             FILE_ATTRIBUTE_NORMAL,
@@ -98,12 +99,13 @@ impl<'a> Info<'a> {
             unsafe { CloseHandle(device_handle) };
             return Err(err)
         }
-        Ok(WinUsbHandle { winusb_handle })
+        Ok(WinUsbHandle { device_handle, winusb_handle })
     }
 }
 
 #[derive(Debug, Clone, Hash, Eq, PartialEq)]
 pub struct WinUsbHandle {
+    device_handle: HANDLE,
     winusb_handle: WINUSB_INTERFACE_HANDLE,
 }
 
@@ -133,7 +135,11 @@ impl WinUsbHandle {
 
 impl Drop for WinUsbHandle {
     fn drop(&mut self) {
-        unsafe { WinUsb_Free(self.winusb_handle) };
+        unsafe { 
+            // reversed free order in destructor
+            WinUsb_Free(self.winusb_handle);
+            CloseHandle(self.device_handle);
+        }
     }
 }
 
