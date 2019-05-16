@@ -3,30 +3,41 @@ pub mod usb;
 
 use std::io;
 
-pub fn devices<'iter>() -> io::Result<Devices<'iter>> {
+pub fn devices() -> io::Result<DeviceList> {
     use usb::ListOptionsExt;
     let handle = setup::ListOptions::all_usb_interfaces()
         .present()
         .list()?;
-    Ok(Devices { handle, iter: None })
+    Ok(handle.into())
+}
+
+#[derive(Debug, Clone)]
+pub struct DeviceList {
+    info_handle: usb::InfoHandle,
+}
+
+impl From<usb::InfoHandle> for DeviceList {
+    fn from(src: usb::InfoHandle) -> DeviceList {
+        DeviceList { info_handle: src }
+    }
+}
+
+impl DeviceList {
+    pub fn iter<'iter>(&self) -> Devices<'iter> {
+        Devices { iter: self.info_handle.iter() }
+    }
 }
 
 #[derive(Debug, Clone)]
 pub struct Devices<'iter> {
-    handle: usb::InfoHandle,
-    iter: Option<usb::InfoIter<'iter>>,
+    iter: usb::InfoIter<'iter>,
 }
 
 impl<'iter> Iterator for Devices<'iter> {
     type Item = io::Result<Device<'iter>>;
     
     fn next(&mut self) -> Option<Self::Item> {
-        if let None = &self.iter {
-            self.iter = Some(self.handle.iter());
-        };
-        if let Some(iter) = &mut self.iter {
-            iter.next().map(|res| res.map(|info| Device { info }))
-        } else { unreachable!() }
+        self.iter.next().map(|res| res.map(|info| Device { info }))
     }
 }
 

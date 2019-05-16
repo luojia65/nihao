@@ -11,8 +11,19 @@ use std::io;
 /// if you want to iterate everything in it by using `for` statements. 
 /// That's because a `Result` is also an `Iterator`, and its `Item` is `Devices`
 /// other than `Device` expected.
-pub fn devices<'iter>() -> io::Result<Devices<'iter>> {
-    sys::devices().map(|inner| Devices { inner })
+pub fn devices() -> io::Result<DeviceList> {
+    sys::devices().map(|inner| DeviceList { inner })
+}
+
+#[derive(Debug, Clone)]
+pub struct DeviceList {
+    inner: sys::DeviceList
+}
+
+impl DeviceList {
+    pub fn iter<'iter>(&self) -> Devices<'iter> {
+        Devices { inner: self.inner.iter() }
+    }
 }
 
 /// An `Iterator` for USB devices.
