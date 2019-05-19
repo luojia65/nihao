@@ -18,4 +18,5 @@ erase target STM32 and STM8 chips.
 `nihao-armelf` is a test suit for ARM favored `elf` files which enable developers to write unit tests
 easily with especially Cortex-M flash targets.
 
-All contributions are welcomed! Please fire an issue or submit your pull request if you want to contribute.
+By now, only limited support of Windows system and ST-Link programmers are finished.
+However, all contributions are welcomed! Please fire an issue or submit your pull request if you want to contribute.
