@@ -10,3 +10,12 @@ It's under heavy development, but this library have its advantages compared to O
 `nihao` has the ability to flash two (and more) chips at the same time using overlapped structures,
 thus it would be unnecessary to unplug and replug to flash your multi-device communicating programs
 into two separate MCU chips. 
+
+`nihao` consists of three modules by now. `nihao-usb` is a stand-alone USB library aimed to support
+basic control transfers and data exchanges with support of overlapped transportations. 
+`nihao-stlink` wraps ST-Link dongles as abstract SWD and JTAG debuggers, allowing read, modify and 
+erase target STM32 and STM8 chips.
+`nihao-armelf` is a test suit for ARM favored `elf` files which enable developers to write unit tests
+easily with especially Cortex-M flash targets.
+
+All contributions are welcomed! Please fire an issue or submit your pull request if you want to contribute.
