@@ -26,6 +26,15 @@ impl DeviceList {
     }
 }
 
+impl<'a> IntoIterator for &'a DeviceList {
+    type Item = <Devices<'a> as Iterator>::Item;
+    type IntoIter = Devices<'a>;
+
+    fn into_iter(self) -> Devices<'a> {
+        self.iter()
+    }
+}
+
 /// An `Iterator` for USB devices.
 #[derive(Debug, Clone)]
 pub struct Devices<'iter> {
