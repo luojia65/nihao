@@ -6,7 +6,7 @@ use core::{
 use std::io;
 
 pub fn handles<'iter>() -> io::Result<Handles<'iter>> {
-    nihao_usb::devices().map(|inner| Handles { inner })
+    nihao_usb::devices().map(|inner| Handles { inner: inner.iter() })
 }
 
 #[derive(Debug, Clone)]
