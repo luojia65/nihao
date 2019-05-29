@@ -24,6 +24,10 @@ impl DeviceList {
     pub fn iter<'iter>(&self) -> Devices<'iter> {
         Devices { inner: self.inner.iter() }
     }
+
+    pub fn len(&self) -> usize {
+        self.inner.len()
+    } 
 }
 
 impl<'a> IntoIterator for &'a DeviceList {

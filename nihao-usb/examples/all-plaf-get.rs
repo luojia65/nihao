@@ -6,5 +6,7 @@ fn main() -> io::Result<()> {
             println!("{:?}", handle.device_descriptor());
         }
     }
+    let len = nihao_usb::devices()?.len();
+    println!("Get len: {}", len);
     Ok(())
 }

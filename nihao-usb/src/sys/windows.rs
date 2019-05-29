@@ -26,6 +26,10 @@ impl DeviceList {
     pub fn iter<'iter>(&self) -> Devices<'iter> {
         Devices { iter: self.info_handle.iter() }
     }
+
+    pub fn len(&self) -> usize {
+        self.iter().count()
+    } 
 }
 
 #[derive(Debug, Clone)]
