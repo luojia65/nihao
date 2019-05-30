@@ -110,6 +110,7 @@ pub struct InterfaceDescriptor {
     pub alternate_setting: u8,
     pub num_endpoints: u8,
     pub interface_class: u8,
+    pub interface_subclass: u8,
     pub interface_protocol: u8,
     pub index_interface: u8,
 }
