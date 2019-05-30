@@ -2,6 +2,6 @@
 members = [
     "nihao-armelf",
     "nihao-stlink",
-    "nihao-swd",
+    "nihao-transfer",
     "nihao-usb",
 ]
