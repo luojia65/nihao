@@ -52,21 +52,21 @@ pub struct Device<'device> {
 
 impl<'device> Device<'device> {
     pub fn open(&self) -> io::Result<Handle> {
-        self.info.open().map(|handle| Handle { handle })
+        self.info.open().map(|handle| Handle { winusb_interface: handle })
     }
 }
 
 #[derive(Debug, Clone, Hash, Eq, PartialEq)]
 pub struct Handle<'handle> {
-    handle: usb::WinUsbDevice<'handle>
+    winusb_interface: usb::WinUsbInterface<'handle>
 }
 
 impl Handle<'_> {
     pub fn device_descriptor(&self) -> io::Result<crate::DeviceDescriptor> {
-        self.handle.device_descriptor()
+        self.winusb_interface.device_descriptor().map(|s| s.into())
     }
 
     pub fn speed(&self) -> io::Result<crate::Speed> {
-        self.handle.speed().map(|s| s.into())
+        self.winusb_interface.speed().map(|s| s.into())
     }
 }

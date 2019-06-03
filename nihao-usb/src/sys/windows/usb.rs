@@ -93,7 +93,7 @@ pub struct Info<'a> {
 }
 
 impl<'a> Info<'a> {
-    pub fn open(&self) -> io::Result<WinUsbDevice> {
+    pub fn open(&self) -> io::Result<WinUsbInterface> {
         let device_handle = unsafe { CreateFileW(
             self.inner.path_ptr(),
             GENERIC_READ | GENERIC_WRITE,
@@ -116,25 +116,25 @@ impl<'a> Info<'a> {
             unsafe { CloseHandle(device_handle) };
             return Err(err)
         }
-        Ok(WinUsbDevice::new(device_handle, winusb_handle))
+        Ok(WinUsbInterface::new(device_handle, winusb_handle))
     }
 }
 
 #[derive(Debug, Clone, Hash, Eq, PartialEq)]
-pub struct WinUsbDevice<'a> {
+pub struct WinUsbInterface<'a> {
     device_handle: HANDLE,
     winusb_handle: WINUSB_INTERFACE_HANDLE,
     _lifetime_of_handles: PhantomData<&'a ()>,
 }
 
-impl WinUsbDevice<'_> {
+impl WinUsbInterface<'_> {
     fn new(device_handle: HANDLE, winusb_handle: WINUSB_INTERFACE_HANDLE) -> Self {
-        WinUsbDevice {
+        WinUsbInterface {
             device_handle, winusb_handle, _lifetime_of_handles: PhantomData
         }
     }
 
-    pub fn device_descriptor(&self) -> io::Result<DeviceDescriptor> {
+    pub fn device_descriptor(&self) -> io::Result<USB_DEVICE_DESCRIPTOR> {
         let desc: USB_DEVICE_DESCRIPTOR = unsafe { core::mem::zeroed() };
         let len = 0;
         // This function not only fails when handle is null (which is impossible here),
@@ -153,7 +153,7 @@ impl WinUsbDevice<'_> {
         if ans == FALSE {
             return Err(io::Error::last_os_error())
         }
-        Ok(desc.into())
+        Ok(desc)
     }
 
     pub fn speed(&self) -> io::Result<USB_DEVICE_SPEED> {
@@ -179,7 +179,7 @@ impl WinUsbDevice<'_> {
     }
 }
 
-impl Drop for WinUsbDevice<'_> {
+impl Drop for WinUsbInterface<'_> {
     fn drop(&mut self) {
         unsafe { 
             // reversed free order in destructor
