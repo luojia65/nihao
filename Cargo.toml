@@ -4,4 +4,5 @@ members = [
     "nihao-stlink",
     "nihao-transfer",
     "nihao-usb",
+    "nihao-xds110",
 ]
