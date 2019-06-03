@@ -1,8 +1,15 @@
-use core::iter::FusedIterator;
-use core::marker::PhantomData;
+#![allow(non_upper_case_globals)]
+
+use core::{
+    iter::FusedIterator,
+    marker::PhantomData
+};
 use std::io;
 use super::setup;
-use crate::DeviceDescriptor;
+use crate::{
+    DeviceDescriptor,
+    Speed
+};
 
 use winapi::{
     um::{
@@ -19,14 +26,20 @@ use winapi::{
         winusb::{
             WinUsb_Initialize, WinUsb_Free,
             WinUsb_GetDescriptor,
+            WinUsb_QueryDeviceInformation,
             WINUSB_INTERFACE_HANDLE
         },
     },
     shared::{
-        minwindef::{FALSE, DWORD},
+        minwindef::{FALSE, DWORD, UCHAR},
         usbiodef::GUID_DEVINTERFACE_USB_DEVICE,
         usbspec::{
             USB_DEVICE_DESCRIPTOR, USB_DEVICE_DESCRIPTOR_TYPE,
+            USB_DEVICE_SPEED,
+            UsbLowSpeed, UsbFullSpeed, UsbHighSpeed, UsbSuperSpeed,
+        },
+        winusbio::{
+            DEVICE_SPEED,
         },
     },
 };
@@ -142,6 +155,28 @@ impl WinUsbDevice<'_> {
         }
         Ok(desc.into())
     }
+
+    pub fn speed(&self) -> io::Result<USB_DEVICE_SPEED> {
+        let device_speed = 0 as UCHAR;
+        // this variable cannot be `static`: otherwise there would be a 
+        // STATUS_ACCESS_VIOLATION error with exit code 0xc0000005 returned
+        let buf_size = core::mem::size_of::<UCHAR>() as DWORD;
+        let ans = unsafe {
+            WinUsb_QueryDeviceInformation(
+                self.winusb_handle, 
+                DEVICE_SPEED,
+                &buf_size as *const _ as *mut _, 
+                &device_speed as *const _ as *mut _
+            )
+        };
+        // If the device is unplugged during this operation,
+        // an error code 22 would be returned indicating the device
+        // does not identify the speed command
+        if ans == FALSE {
+            return Err(io::Error::last_os_error())
+        }
+        Ok(device_speed.into())
+    }
 }
 
 impl Drop for WinUsbDevice<'_> {
@@ -171,6 +206,18 @@ impl From<USB_DEVICE_DESCRIPTOR> for DeviceDescriptor {
             product: src.iProduct,
             serial_number: src.iSerialNumber,
             num_configurations: src.bNumConfigurations,
+        }
+    }
+}
+
+impl From<USB_DEVICE_SPEED> for Speed {
+    fn from(src: USB_DEVICE_SPEED) -> Speed {
+        match src {
+            UsbLowSpeed => Speed::Low,
+            UsbFullSpeed => Speed::Full,
+            UsbHighSpeed => Speed::High,
+            UsbSuperSpeed => Speed::Super,
+            _ => Speed::Unknown,
         }
     }
 }

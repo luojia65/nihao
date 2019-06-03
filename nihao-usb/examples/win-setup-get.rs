@@ -9,6 +9,7 @@ fn main() -> io::Result<()> {
         if let Ok(info) = info {
             if let Ok(usb) = info.open() {
                 println!("{:?}", usb.device_descriptor());
+                println!("Speed: {:?}", usb.speed());
             }
         }
     }

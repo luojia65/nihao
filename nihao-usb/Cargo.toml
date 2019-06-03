@@ -9,6 +9,7 @@ edition = "2018"
 [target.'cfg(windows)'.dependencies.winapi]
 version = "*"
 features = [
-    "winusb", "setupapi", "handleapi", "errhandlingapi",
-    "winerror", "usbiodef", "fileapi", "heapapi", "winbase"
+    "winbase", "winerror", "errhandlingapi",
+    "handleapi", "fileapi", "heapapi",
+    "setupapi", "winusb", "usbspec", "winusbio", "usbiodef",
 ]

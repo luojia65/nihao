@@ -80,6 +80,10 @@ impl<'handle> Handle<'handle> {
     pub fn device_descriptor(&self) -> io::Result<DeviceDescriptor> {
         self.inner.device_descriptor()
     }
+
+    pub fn speed(&self) -> io::Result<crate::Speed>  {
+        self.inner.speed()
+    }
 }
 
 /// A `DeviceDescriptor` describing what this name represents in the USB specification
@@ -113,4 +117,13 @@ pub struct InterfaceDescriptor {
     pub interface_subclass: u8,
     pub interface_protocol: u8,
     pub index_interface: u8,
+}
+
+#[derive(Debug, Clone, Hash, Eq, PartialEq)] 
+pub enum Speed {
+    Unknown,
+    Low,
+    Full,
+    High,
+    Super,
 }

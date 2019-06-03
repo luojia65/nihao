@@ -65,4 +65,8 @@ impl Handle<'_> {
     pub fn device_descriptor(&self) -> io::Result<crate::DeviceDescriptor> {
         self.handle.device_descriptor()
     }
+
+    pub fn speed(&self) -> io::Result<crate::Speed> {
+        self.handle.speed().map(|s| s.into())
+    }
 }
