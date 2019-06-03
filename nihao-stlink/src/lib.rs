@@ -5,39 +5,39 @@ use core::{
 };
 use std::io;
 
-pub fn handles<'iter>() -> io::Result<Handles<'iter>> {
-    nihao_usb::devices().map(|inner| Handles { inner: inner.iter() })
-}
+// pub fn handles<'iter>() -> io::Result<Handles<'iter>> {
+//     nihao_usb::devices().map(|inner| Handles { inner: inner.iter() })
+// }
 
-#[derive(Debug, Clone)]
-pub struct Handles<'iter> {
-    inner: nihao_usb::Devices<'iter>,
-}
+// #[derive(Debug, Clone)]
+// pub struct Handles<'iter> {
+//     inner: nihao_usb::Devices<'iter>,
+// }
 
-impl<'iter> Iterator for Handles<'iter> {
-    type Item = io::Result<Handle>;
+// impl<'iter> Iterator for Handles<'iter> {
+//     type Item = io::Result<Handle<'iter>>;
 
-    fn next(&mut self) -> Option<Self::Item> {
-        // TODO: Which error should we drop or handle?
+//     fn next(&mut self) -> Option<Self::Item> {
+//         // TODO: Which error should we drop or handle?
 
-        // self.inner.next().map(|r| r
-        //     .and_then(|d| d.open())
-        //     .and_then(|h| Handle::try_from(h).map_err(|(_h, err)| err.into()))
-        // )
+//         // self.inner.next().map(|r| r
+//         //     .and_then(|d| d.open())
+//         //     .and_then(|h| Handle::try_from(h).map_err(|(_h, err)| err.into()))
+//         // )
 
-        use TryFromHandleError::*;
-        while let Some(Ok(d)) = self.inner.next() {
-            // unable to open, continue
-            let h = if let Ok(h) = d.open() { h } else { continue };
-            match Handle::try_from(h) {
-                Ok(h) => return Some(Ok(h)),
-                Err((_h, IoError(e))) => return Some(Err(e)),
-                Err(_) => continue,
-            }
-        }
-        None
-    }
-}
+//         use TryFromHandleError::*;
+//         while let Some(Ok(d)) = self.inner.next() {
+//             // unable to open, continue
+//             let h = if let Ok(h) = d.open() { h } else { continue };
+//             match Handle::try_from(h) {
+//                 Ok(h) => return Some(Ok(h))),
+//                 Err((_h, IoError(e))) => return Some(Err(e)),
+//                 Err(_) => continue,
+//             }
+//         }
+//         None
+//     }
+// }
 
 impl FusedIterator for Handles<'_> {}
 
@@ -47,13 +47,13 @@ impl FusedIterator for Handles<'_> {}
 /// When this happens, methods of `Handle` should return `Err` values other than 
 /// normal `Ok` with results.
 #[derive(Debug, Clone, Hash, Eq, PartialEq)]
-pub struct Handle {
-    inner: nihao_usb::Handle,
+pub struct Handle<'h> {
+    inner: nihao_usb::Handle<'h>,
     version: Version,
 }
 
-impl Handle {
-    pub fn into_inner(self) -> nihao_usb::Handle {
+impl<'h> Handle<'h> {
+    pub fn into_inner(self) -> nihao_usb::Handle<'h> {
         self.inner
     }
 
@@ -91,10 +91,10 @@ impl From<TryFromHandleError> for io::Error {
     }
 }
 
-impl TryFrom<nihao_usb::Handle> for Handle {
-    type Error = (nihao_usb::Handle, TryFromHandleError);
+impl<'h> TryFrom<nihao_usb::Handle<'h>> for Handle<'h> {
+    type Error = (nihao_usb::Handle<'h>, TryFromHandleError);
 
-    fn try_from(src: nihao_usb::Handle) -> Result<Handle, Self::Error> {
+    fn try_from(src: nihao_usb::Handle<'h>) -> Result<Handle<'h>, Self::Error> {
         use TryFromHandleError::*;
         let desc = match src.device_descriptor() {
             Ok(desc) => desc,

@@ -62,7 +62,7 @@ pub struct Device<'device> {
 }
 
 impl<'device> Device<'device> {
-    pub fn open(&self) -> io::Result<Handle> {
+    pub fn open(&'device self) -> io::Result<Handle<'device>> {
         self.inner.open().map(|inner| Handle { inner })
     }
 }
@@ -72,11 +72,11 @@ impl<'device> Device<'device> {
 /// Underlying code must ensure that this handle implements `Drop` and all relevant
 /// resources are freed during their `drop` operations.
 #[derive(Debug, Clone, Hash, Eq, PartialEq)]
-pub struct Handle {
-    inner: sys::Handle,
+pub struct Handle<'handle> {
+    inner: sys::Handle<'handle>,
 }
 
-impl Handle {
+impl<'handle> Handle<'handle> {
     pub fn device_descriptor(&self) -> io::Result<DeviceDescriptor> {
         self.inner.device_descriptor()
     }

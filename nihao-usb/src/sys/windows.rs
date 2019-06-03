@@ -57,11 +57,11 @@ impl<'device> Device<'device> {
 }
 
 #[derive(Debug, Clone, Hash, Eq, PartialEq)]
-pub struct Handle {
-    handle: usb::WinUsbHandle
+pub struct Handle<'handle> {
+    handle: usb::WinUsbDevice<'handle>
 }
 
-impl Handle {
+impl Handle<'_> {
     pub fn device_descriptor(&self) -> io::Result<crate::DeviceDescriptor> {
         self.handle.device_descriptor()
     }

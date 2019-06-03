@@ -1,4 +1,5 @@
 use core::iter::FusedIterator;
+use core::marker::PhantomData;
 use std::io;
 use super::setup;
 use crate::DeviceDescriptor;
@@ -79,7 +80,7 @@ pub struct Info<'a> {
 }
 
 impl<'a> Info<'a> {
-    pub fn open(&self) -> io::Result<WinUsbHandle> {
+    pub fn open(&self) -> io::Result<WinUsbDevice> {
         let device_handle = unsafe { CreateFileW(
             self.inner.path_ptr(),
             GENERIC_READ | GENERIC_WRITE,
@@ -102,17 +103,24 @@ impl<'a> Info<'a> {
             unsafe { CloseHandle(device_handle) };
             return Err(err)
         }
-        Ok(WinUsbHandle { device_handle, winusb_handle })
+        Ok(WinUsbDevice::new(device_handle, winusb_handle))
     }
 }
 
 #[derive(Debug, Clone, Hash, Eq, PartialEq)]
-pub struct WinUsbHandle {
+pub struct WinUsbDevice<'a> {
     device_handle: HANDLE,
     winusb_handle: WINUSB_INTERFACE_HANDLE,
+    _lifetime_of_handles: PhantomData<&'a ()>,
 }
 
-impl WinUsbHandle {
+impl WinUsbDevice<'_> {
+    fn new(device_handle: HANDLE, winusb_handle: WINUSB_INTERFACE_HANDLE) -> Self {
+        WinUsbDevice {
+            device_handle, winusb_handle, _lifetime_of_handles: PhantomData
+        }
+    }
+
     pub fn device_descriptor(&self) -> io::Result<DeviceDescriptor> {
         let desc: USB_DEVICE_DESCRIPTOR = unsafe { core::mem::zeroed() };
         let len = 0;
@@ -136,7 +144,7 @@ impl WinUsbHandle {
     }
 }
 
-impl Drop for WinUsbHandle {
+impl Drop for WinUsbDevice<'_> {
     fn drop(&mut self) {
         unsafe { 
             // reversed free order in destructor
