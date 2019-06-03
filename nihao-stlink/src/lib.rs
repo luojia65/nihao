@@ -39,7 +39,7 @@ use std::io;
 //     }
 // }
 
-impl FusedIterator for Handles<'_> {}
+// impl FusedIterator for Handles<'_> {}
 
 /// A handle of a device connection. 
 /// 
