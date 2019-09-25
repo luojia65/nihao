@@ -24,7 +24,6 @@ impl<'h> InfoHandle<'h> {
 impl<'h> Drop for InfoHandle<'h> {
     #[inline]
     fn drop(&mut self) {
-        println!("ITER DROP");
         unsafe { SetupDiDestroyDeviceInfoList(self.handle_dev_info) };
     }
 }

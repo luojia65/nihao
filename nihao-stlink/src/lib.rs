@@ -25,15 +25,6 @@ impl<'list> HandleList<'list> {
     } 
 }
 
-impl<'list> IntoIterator for HandleList<'list> {
-    type Item = <Handles<'list> as Iterator>::Item;
-    type IntoIter = Handles<'list>;
-
-    fn into_iter(self) -> Handles<'list> {
-        self.iter()
-    }
-}
-
 #[derive(Debug, Clone)]
 pub struct Handles<'iter> {
     inner: nihao_usb::Devices<'iter>,
@@ -50,21 +41,18 @@ impl<'iter> Iterator for Handles<'iter> {
         //     .and_then(|h| Handle::try_from(h).map_err(|(_h, err)| err.into()))
         // )
 
-        // use TryFromHandleError::*;
+        use TryFromHandleError::*;
         // println!("{:?}", self.list);
-
-        println!("{:?}", self.inner.next());
         
-        // while let Some(Ok(usb_device)) = self.inner.next() {
-        //     // unable to open, continue
-        //     println!("{:?}", usb_device);
-        //     let h = if let Ok(h) = usb_device.open() { h } else { continue };
-        //     match Handle::try_from(h) {
-        //         Ok(h) => return Some(Ok(h)),
-        //         Err((_h, IoError(e))) => return Some(Err(e)),
-        //         Err(_) => continue,
-        //     }
-        // }
+        while let Some(Ok(usb_device)) = self.inner.next() {
+            // unable to open, continue
+            let h = if let Ok(h) = usb_device.open() { h } else { continue };
+            match Handle::try_from(h) {
+                Ok(h) => return Some(Ok(h)),
+                Err((_h, IoError(e))) => return Some(Err(e)),
+                Err(_) => continue,
+            }
+        }
         None
     }
 }
@@ -126,7 +114,6 @@ impl<'h> TryFrom<nihao_usb::Handle<'h>> for Handle<'h> {
 
     fn try_from(src: nihao_usb::Handle<'h>) -> Result<Handle<'h>, Self::Error> {
         use TryFromHandleError::*;
-        println!("src: {:?}", src);
         let desc = match src.device_descriptor() {
             Ok(desc) => desc,
             Err(err) => return Err((src, err.into())),

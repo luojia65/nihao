@@ -30,14 +30,14 @@ impl<'list> DeviceList<'list> {
     } 
 }
 
-impl<'list> IntoIterator for DeviceList<'list> {
-    type Item = <Devices<'list> as Iterator>::Item;
-    type IntoIter = Devices<'list>;
+// impl<'list> IntoIterator for DeviceList<'list> {
+//     type Item = <Devices<'list> as Iterator>::Item;
+//     type IntoIter = Devices<'list>;
 
-    fn into_iter(self) -> Devices<'list> {
-        self.iter()
-    }
-}
+//     fn into_iter(self) -> Devices<'list> {
+//         self.iter()
+//     }
+// }
 
 /// An `Iterator` for USB devices.
 #[derive(Debug, Clone)]

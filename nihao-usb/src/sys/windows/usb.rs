@@ -67,7 +67,6 @@ impl<'h> From<setup::InfoHandle<'h>> for InfoHandle<'h> {
 
 impl<'h> InfoHandle<'h> {
     pub fn iter<'a>(&self) -> InfoIter<'a> {
-        println!("ITER CREATE");
         InfoIter { inner: self.inner.iter(&GUID_DEVINTERFACE_USB_DEVICE) }
     }
 }
