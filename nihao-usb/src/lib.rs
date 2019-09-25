@@ -11,16 +11,16 @@ use std::io;
 /// if you want to iterate everything in it by using `for` statements. 
 /// That's because a `Result` is also an `Iterator`, and its `Item` is `Devices`
 /// other than `Device` expected.
-pub fn devices() -> io::Result<DeviceList> {
+pub fn devices<'list>() -> io::Result<DeviceList<'list>> {
     sys::devices().map(|inner| DeviceList { inner })
 }
 
 #[derive(Debug, Clone)]
-pub struct DeviceList {
-    inner: sys::DeviceList
+pub struct DeviceList<'list> {
+    inner: sys::DeviceList<'list>
 }
 
-impl DeviceList {
+impl<'list> DeviceList<'list> {
     pub fn iter<'iter>(&self) -> Devices<'iter> {
         Devices { inner: self.inner.iter() }
     }
@@ -30,11 +30,11 @@ impl DeviceList {
     } 
 }
 
-impl<'a> IntoIterator for &'a DeviceList {
-    type Item = <Devices<'a> as Iterator>::Item;
-    type IntoIter = Devices<'a>;
+impl<'list> IntoIterator for DeviceList<'list> {
+    type Item = <Devices<'list> as Iterator>::Item;
+    type IntoIter = Devices<'list>;
 
-    fn into_iter(self) -> Devices<'a> {
+    fn into_iter(self) -> Devices<'list> {
         self.iter()
     }
 }

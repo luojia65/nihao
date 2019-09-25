@@ -9,18 +9,19 @@ use winapi::{
 pub use winapi::um::setupapi::HDEVINFO;
 
 #[derive(Debug, Clone, Hash, Eq, PartialEq)]
-pub struct InfoHandle {
+pub struct InfoHandle<'h> {
     handle_dev_info: HDEVINFO,
+    _lifetime_of_handle: PhantomData<&'h ()>
 }
  
-impl InfoHandle {
+impl<'h> InfoHandle<'h> {
     #[inline]
     pub fn iter<'a>(&self, guid: &'a GUID) -> InfoIter<'a> {
         InfoIter::from_handle_guid(self.handle_dev_info, guid)
     }
 }
 
-impl Drop for InfoHandle {
+impl<'h> Drop for InfoHandle<'h> {
     #[inline]
     fn drop(&mut self) {
         unsafe { SetupDiDestroyDeviceInfoList(self.handle_dev_info) };
@@ -259,9 +260,9 @@ impl<TYPE, OUTPUT> ListOptions<TYPE, OUTPUT> {
     }
 }
 
-impl<TYPE, OUTPUT> ListOptions<TYPE, OUTPUT> 
+impl<'h, TYPE, OUTPUT> ListOptions<TYPE, OUTPUT> 
 where 
-    OUTPUT: From<InfoHandle>
+    OUTPUT: From<InfoHandle<'h>>
 {
     #[inline]
     pub fn list(&self) -> io::Result<OUTPUT> {
@@ -276,7 +277,10 @@ where
         if handle_dev_info == INVALID_HANDLE_VALUE {
             Err(io::Error::last_os_error())
         } else {
-            Ok(OUTPUT::from(InfoHandle { handle_dev_info }))
+            Ok(OUTPUT::from(InfoHandle { 
+                handle_dev_info,
+                _lifetime_of_handle: PhantomData 
+            }))
         }
     }
 }

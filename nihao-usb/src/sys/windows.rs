@@ -3,7 +3,7 @@ pub mod usb;
 
 use std::io;
 
-pub fn devices() -> io::Result<DeviceList> {
+pub fn devices<'list>() -> io::Result<DeviceList<'list>> {
     use usb::ListOptionsExt;
     let handle = setup::ListOptions::all_usb_interfaces()
         .present()
@@ -12,17 +12,17 @@ pub fn devices() -> io::Result<DeviceList> {
 }
 
 #[derive(Debug, Clone)]
-pub struct DeviceList {
-    info_handle: usb::InfoHandle,
+pub struct DeviceList<'list> {
+    info_handle: usb::InfoHandle<'list>,
 }
 
-impl From<usb::InfoHandle> for DeviceList {
+impl<'list> From<usb::InfoHandle<'list>> for DeviceList<'list> {
     fn from(src: usb::InfoHandle) -> DeviceList {
         DeviceList { info_handle: src }
     }
 }
 
-impl DeviceList {
+impl<'list> DeviceList<'list> {
     pub fn iter<'iter>(&self) -> Devices<'iter> {
         Devices { iter: self.info_handle.iter() }
     }

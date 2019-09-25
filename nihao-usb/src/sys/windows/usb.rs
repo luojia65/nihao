@@ -44,28 +44,28 @@ use winapi::{
     },
 };
 
-pub trait ListOptionsExt {
-    fn all_usb_interfaces() -> setup::ListOptions<setup::Interface, InfoHandle>;
+pub trait ListOptionsExt<'h> {
+    fn all_usb_interfaces() -> setup::ListOptions<setup::Interface, InfoHandle<'h>>;
 }
 
-impl ListOptionsExt for setup::ListOptions<setup::Interface, InfoHandle> {
-    fn all_usb_interfaces() -> setup::ListOptions<setup::Interface, InfoHandle> {
+impl<'h> ListOptionsExt<'h> for setup::ListOptions<setup::Interface, InfoHandle<'h>> {
+    fn all_usb_interfaces() -> setup::ListOptions<setup::Interface, InfoHandle<'h>> {
         setup::ListOptions::interface_by_class(&GUID_DEVINTERFACE_USB_DEVICE)
     }
 }
 
 #[derive(Debug, Clone, Hash, Eq, PartialEq)]
-pub struct InfoHandle {
-    inner: setup::InfoHandle,
+pub struct InfoHandle<'h> {
+    inner: setup::InfoHandle<'h>,
 }
 
-impl From<setup::InfoHandle> for InfoHandle {
-    fn from(src: setup::InfoHandle) -> InfoHandle {
+impl<'h> From<setup::InfoHandle<'h>> for InfoHandle<'h> {
+    fn from(src: setup::InfoHandle<'h>) -> InfoHandle {
         InfoHandle { inner: src }
     }
 }
 
-impl InfoHandle {
+impl<'h> InfoHandle<'h> {
     pub fn iter<'a>(&self) -> InfoIter<'a> {
         InfoIter { inner: self.inner.iter(&GUID_DEVINTERFACE_USB_DEVICE) }
     }
