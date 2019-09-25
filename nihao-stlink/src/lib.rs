@@ -14,7 +14,6 @@ pub struct HandleList<'list> {
     inner: nihao_usb::DeviceList<'list>,
 }
 
-
 impl<'list> HandleList<'list> {
     pub fn iter<'iter>(&self) -> Handles<'iter> {
         Handles { inner: self.inner.iter() }
@@ -24,6 +23,8 @@ impl<'list> HandleList<'list> {
         self.inner.len()
     } 
 }
+
+// todo: handle::IntoIter<'iter>
 
 #[derive(Debug, Clone)]
 pub struct Handles<'iter> {

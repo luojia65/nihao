@@ -31,11 +31,11 @@ impl<'list> DeviceList<'list> {
 }
 
 // impl<'list> IntoIterator for DeviceList<'list> {
-//     type Item = <Devices<'list> as Iterator>::Item;
-//     type IntoIter = Devices<'list>;
+//     type Item = <device::IntoIter<'list> as Iterator>::Item;
+//     type IntoIter = device::IntoIter<'list>;
 
-//     fn into_iter(self) -> Devices<'list> {
-//         self.iter()
+//     fn into_iter(self) -> device::IntoIter<'list> {
+//         self.iter() // todo
 //     }
 // }
 
