@@ -109,7 +109,8 @@ impl fmt::Debug for InfoIter<'_> {
 // todo: const fn
 #[inline]
 fn create_sp_dev_interface_data() -> SP_DEVICE_INTERFACE_DATA {
-    let mut ans = unsafe { mem::uninitialized::<SP_DEVICE_INTERFACE_DATA>() };
+    let mut ans: SP_DEVICE_INTERFACE_DATA = 
+        unsafe { mem::MaybeUninit::uninit().assume_init() };
     ans.cbSize = mem::size_of::<SP_DEVICE_INTERFACE_DATA>() as DWORD;
     ans
 }
