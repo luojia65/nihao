@@ -34,15 +34,7 @@ impl<'iter> Iterator for Handles<'iter> {
     type Item = io::Result<Handle<'iter>>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        // TODO: Which error should we drop or handle?
-
-        // self.inner.next().map(|r| r
-        //     .and_then(|d| d.open())
-        //     .and_then(|h| Handle::try_from(h).map_err(|(_h, err)| err.into()))
-        // )
-
         use TryFromHandleError::*;
-        // println!("{:?}", self.list);
         
         while let Some(Ok(usb_device)) = self.inner.next() {
             // unable to open, continue
