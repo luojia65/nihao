@@ -17,7 +17,7 @@ pub struct HandleList<'list> {
 
 impl<'list> HandleList<'list> {
     pub fn iter<'iter>(&self) -> Handles<'iter> {
-        Handles { list: self.inner }
+        Handles { inner: self.inner.iter() }
     }
 
     pub fn len(&self) -> usize {
@@ -36,7 +36,7 @@ impl<'list> IntoIterator for HandleList<'list> {
 
 #[derive(Debug, Clone)]
 pub struct Handles<'iter> {
-    inner: nihao_usb::Devices<'iter>
+    inner: nihao_usb::Devices<'iter>,
 }
 
 impl<'iter> Iterator for Handles<'iter> {

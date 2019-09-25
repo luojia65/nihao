@@ -16,7 +16,7 @@ pub struct InfoHandle<'h> {
  
 impl<'h> InfoHandle<'h> {
     #[inline]
-    pub fn iter<'a>(&self, guid: &'a GUID) -> InfoIter<'a> {
+    pub fn iter<'a>(&self, guid: &GUID) -> InfoIter<'a> {
         InfoIter::from_handle_guid(self.handle_dev_info, guid)
     }
 }
@@ -24,6 +24,7 @@ impl<'h> InfoHandle<'h> {
 impl<'h> Drop for InfoHandle<'h> {
     #[inline]
     fn drop(&mut self) {
+        println!("ITER DROP");
         unsafe { SetupDiDestroyDeviceInfoList(self.handle_dev_info) };
     }
 }
@@ -80,7 +81,7 @@ pub struct InfoIter<'iter> {
 }
 
 impl<'iter> InfoIter<'iter> {
-    fn from_handle_guid(handle_dev_info: HDEVINFO, guid: &'iter GUID) -> InfoIter<'iter> {
+    fn from_handle_guid(handle_dev_info: HDEVINFO, guid: &GUID) -> InfoIter<'iter> {
         InfoIter {
             handle_dev_info: handle_dev_info,
             iter_index: 0,
