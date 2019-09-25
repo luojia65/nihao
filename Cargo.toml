@@ -1,6 +1,5 @@
 [workspace]
 members = [
-    "nihao-armelf",
     "nihao-stlink",
     "nihao-transfer",
     "nihao-usb",

@@ -5,41 +5,41 @@ use core::{
 };
 use std::io;
 
-// pub fn handles<'iter>() -> io::Result<Handles<'iter>> {
-//     nihao_usb::devices().map(|inner| Handles { inner: inner.iter() })
-// }
+pub fn handles<'iter>() -> io::Result<Handles<'iter>> {
+    nihao_usb::devices().map(|inner| Handles { inner: inner.iter() })
+}
 
-// #[derive(Debug, Clone)]
-// pub struct Handles<'iter> {
-//     inner: nihao_usb::Devices<'iter>,
-// }
+#[derive(Debug, Clone)]
+pub struct Handles<'iter> {
+    inner: nihao_usb::Devices<'iter>,
+}
 
-// impl<'iter> Iterator for Handles<'iter> {
-//     type Item = io::Result<Handle<'iter>>;
+impl<'iter> Iterator for Handles<'iter> {
+    type Item = io::Result<Handle<'iter>>;
 
-//     fn next(&mut self) -> Option<Self::Item> {
-//         // TODO: Which error should we drop or handle?
+    fn next(&mut self) -> Option<Self::Item> {
+        // TODO: Which error should we drop or handle?
 
-//         // self.inner.next().map(|r| r
-//         //     .and_then(|d| d.open())
-//         //     .and_then(|h| Handle::try_from(h).map_err(|(_h, err)| err.into()))
-//         // )
+        self.inner.next().map(|r| r
+            .and_then(|d| d.open())
+            .and_then(|h| Handle::try_from(h).map_err(|(_h, err)| err.into()))
+        )
 
-//         use TryFromHandleError::*;
-//         while let Some(Ok(d)) = self.inner.next() {
-//             // unable to open, continue
-//             let h = if let Ok(h) = d.open() { h } else { continue };
-//             match Handle::try_from(h) {
-//                 Ok(h) => return Some(Ok(h))),
-//                 Err((_h, IoError(e))) => return Some(Err(e)),
-//                 Err(_) => continue,
-//             }
-//         }
-//         None
-//     }
-// }
+        // use TryFromHandleError::*;
+        // while let Some(Ok(d)) = self.inner.next() {
+        //     // unable to open, continue
+        //     let h = if let Ok(h) = d.open() { h } else { continue };
+        //     match Handle::try_from(h) {
+        //         Ok(h) => return Some(Ok(h)),
+        //         Err((_h, IoError(e))) => return Some(Err(e)),
+        //         Err(_) => continue,
+        //     }
+        // }
+        // None
+    }
+}
 
-// impl FusedIterator for Handles<'_> {}
+impl FusedIterator for Handles<'_> {}
 
 /// A handle of a device connection. 
 /// 

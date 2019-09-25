@@ -62,7 +62,7 @@ pub struct Device<'device> {
 }
 
 impl<'device> Device<'device> {
-    pub fn open(&'device self) -> io::Result<Handle<'device>> {
+    pub fn open<'handle>(&self) -> io::Result<Handle<'handle>> {
         self.inner.open().map(|inner| Handle { inner })
     }
 }

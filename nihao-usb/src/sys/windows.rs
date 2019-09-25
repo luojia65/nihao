@@ -51,7 +51,7 @@ pub struct Device<'device> {
 }
 
 impl<'device> Device<'device> {
-    pub fn open(&self) -> io::Result<Handle> {
+    pub fn open<'handle>(&self) -> io::Result<Handle<'handle>> {
         self.info.open().map(|handle| Handle { winusb_interface: handle })
     }
 }

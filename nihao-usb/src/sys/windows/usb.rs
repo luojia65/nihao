@@ -93,7 +93,7 @@ pub struct Info<'a> {
 }
 
 impl<'a> Info<'a> {
-    pub fn open(&self) -> io::Result<WinUsbInterface> {
+    pub fn open<'h>(&self) -> io::Result<WinUsbInterface<'h>> {
         let device_handle = unsafe { CreateFileW(
             self.inner.path_ptr(),
             GENERIC_READ | GENERIC_WRITE,
@@ -121,13 +121,13 @@ impl<'a> Info<'a> {
 }
 
 #[derive(Debug, Clone, Hash, Eq, PartialEq)]
-pub struct WinUsbInterface<'a> {
+pub struct WinUsbInterface<'h> {
     device_handle: HANDLE,
     winusb_handle: WINUSB_INTERFACE_HANDLE,
-    _lifetime_of_handles: PhantomData<&'a ()>,
+    _lifetime_of_handles: PhantomData<&'h ()>,
 }
 
-impl WinUsbInterface<'_> {
+impl<'h> WinUsbInterface<'h> {
     fn new(device_handle: HANDLE, winusb_handle: WINUSB_INTERFACE_HANDLE) -> Self {
         WinUsbInterface {
             device_handle, winusb_handle, _lifetime_of_handles: PhantomData
