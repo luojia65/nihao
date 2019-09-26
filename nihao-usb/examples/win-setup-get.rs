@@ -21,12 +21,16 @@ fn main() -> io::Result<()> {
                     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
                 ];
                 let mut buf_recv = vec![0u8; 1024];
+                println!("= Write!");
                 let ov_write = usb.write_pipe_overlapped(0x02, &buf_send).unwrap();
-                while let Poll::Pending = usb.poll_overlapped(&ov_write) {}
+                println!("= Read!");
                 let ov_read = usb.read_pipe_overlapped(0x81, &mut buf_recv).unwrap();
-                while let Poll::Pending = usb.poll_overlapped(&ov_read) {}
+                println!("= Poll write!");
+                while let Poll::Pending = usb.poll_overlapped(ov_write.as_ref()) {}
+                // while let Poll::Pending = usb.poll_overlapped(&ov_read) {}
+                println!("= Poll read!");
                 loop {
-                    if let Poll::Ready(len) = usb.poll_overlapped(&ov_read) {
+                    if let Poll::Ready(len) = usb.poll_overlapped(ov_read.as_ref()) {
                         let len = len.unwrap();
                         println!("Bytes read: {:?}", len);
                         println!("{:?}", &buf_recv[..len]);
