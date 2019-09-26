@@ -4,7 +4,7 @@ use std::io;
 
 pub struct IntoIter<'iter> {
     iter: Devices<'iter>,
-    list_ptr: *const DeviceList<'iter>,
+    list: mem::ManuallyDrop<DeviceList<'iter>>,
 }
 
 impl<'list> IntoIterator for DeviceList<'list> {
@@ -13,16 +13,15 @@ impl<'list> IntoIterator for DeviceList<'list> {
 
     fn into_iter(self) -> IntoIter<'list> {
         let iter = self.iter();
-        let list_ptr = &self as *const _;
-        mem::forget(self);
-        IntoIter { iter, list_ptr }
+        let list = mem::ManuallyDrop::new(self);
+        IntoIter { iter, list }
     }
 }
 
 impl<'iter> Drop for IntoIter<'iter> {
     fn drop(&mut self) {
-        let list = unsafe { &*self.list_ptr };
-        mem::drop(list);
+        // println!("Calling drop");
+        unsafe { mem::ManuallyDrop::drop(&mut self.list) };
     }
 }
 
