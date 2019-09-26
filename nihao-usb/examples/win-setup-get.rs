@@ -24,6 +24,7 @@ fn main() -> io::Result<()> {
                 let ov_write = usb.write_pipe_overlapped(0x02, &buf_send).unwrap();
                 while let Poll::Pending = usb.poll_overlapped(&ov_write) {}
                 let ov_read = usb.read_pipe_overlapped(0x81, &mut buf_recv).unwrap();
+                while let Poll::Pending = usb.poll_overlapped(&ov_read) {}
                 loop {
                     if let Poll::Ready(len) = usb.poll_overlapped(&ov_read) {
                         let len = len.unwrap();
