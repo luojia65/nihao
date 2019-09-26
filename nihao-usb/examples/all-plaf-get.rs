@@ -1,13 +1,17 @@
 use std::io;
 
 fn main() -> io::Result<()> {
+    let mut i = 0;
     for device in nihao_usb::devices()? {
-        if let Ok(handle) = device?.open() {
+        i += 1;
+        println!("= [{}] Device: {:?}", i, device);
+        let device = device?;
+        println!("{:?}", device.open());
+        if let Ok(handle) = device.open() {
             println!("{:?}", handle.device_descriptor());
             println!("{:?}", handle.speed());
         }
     }
-    let len = nihao_usb::devices()?.len();
-    println!("Get len: {}", len);
+    println!("Count of devices: {}", i);
     Ok(())
 }
