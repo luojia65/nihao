@@ -2,12 +2,14 @@
 
 use core::{
     iter::FusedIterator,
-    marker::PhantomData
+    marker::PhantomData,
+    mem,
 };
 use std::io;
 use super::setup;
 use crate::{
     DeviceDescriptor,
+    InterfaceDescriptor,
     Speed
 };
 
@@ -23,18 +25,23 @@ use winapi::{
         winbase::{FILE_FLAG_OVERLAPPED},
         fileapi::{CreateFileW, OPEN_EXISTING},
         handleapi::{CloseHandle, INVALID_HANDLE_VALUE},
+        errhandlingapi::GetLastError,
         winusb::{
             WinUsb_Initialize, WinUsb_Free,
             WinUsb_GetDescriptor,
             WinUsb_QueryDeviceInformation,
-            WINUSB_INTERFACE_HANDLE
+            WinUsb_QueryInterfaceSettings,
+            WINUSB_INTERFACE_HANDLE,
+            USB_INTERFACE_DESCRIPTOR,
         },
     },
     shared::{
         minwindef::{FALSE, DWORD, UCHAR},
+        winerror::ERROR_NO_MORE_ITEMS,
         usbiodef::GUID_DEVINTERFACE_USB_DEVICE,
         usbspec::{
-            USB_DEVICE_DESCRIPTOR, USB_DEVICE_DESCRIPTOR_TYPE,
+            USB_DEVICE_DESCRIPTOR,
+            USB_DEVICE_DESCRIPTOR_TYPE,
             USB_DEVICE_SPEED,
             UsbLowSpeed, UsbFullSpeed, UsbHighSpeed, UsbSuperSpeed,
         },
@@ -135,7 +142,7 @@ impl<'h> WinUsbInterface<'h> {
     }
 
     pub fn device_descriptor(&self) -> io::Result<USB_DEVICE_DESCRIPTOR> {
-        let desc: USB_DEVICE_DESCRIPTOR = unsafe { core::mem::zeroed() };
+        let mut desc = mem::MaybeUninit::<USB_DEVICE_DESCRIPTOR>::uninit();
         let len = 0;
         // This function not only fails when handle is null (which is impossible here),
         // but also fails when there being an error while reading.
@@ -146,14 +153,14 @@ impl<'h> WinUsbInterface<'h> {
             USB_DEVICE_DESCRIPTOR_TYPE,
             0,
             LANG_NEUTRAL,
-            &desc as *const _ as *mut _,
+            desc.as_mut_ptr() as *mut u8,
             core::mem::size_of::<USB_DEVICE_DESCRIPTOR>() as DWORD,
             &len as *const _ as *mut _
         ) };
         if ans == FALSE {
             return Err(io::Error::last_os_error())
         }
-        Ok(desc)
+        Ok(unsafe { desc.assume_init() })
     }
 
     pub fn speed(&self) -> io::Result<USB_DEVICE_SPEED> {
@@ -176,6 +183,26 @@ impl<'h> WinUsbInterface<'h> {
             return Err(io::Error::last_os_error())
         }
         Ok(device_speed.into())
+    }
+
+    pub fn interface_settings(&self, interface_number: u8) 
+        -> io::Result<Option<USB_INTERFACE_DESCRIPTOR>>
+    {
+        let mut desc = mem::MaybeUninit::<USB_INTERFACE_DESCRIPTOR>::uninit();
+        let ans = unsafe {
+            WinUsb_QueryInterfaceSettings(
+                self.winusb_handle,
+                interface_number,
+                desc.as_mut_ptr()
+            )
+        };
+        if ans == FALSE {
+            if unsafe { GetLastError() } == ERROR_NO_MORE_ITEMS {
+                return Ok(None);
+            }
+            return Err(io::Error::last_os_error());
+        }
+        Ok(Some(unsafe { desc.assume_init() }))
     }
 }
 
@@ -206,6 +233,22 @@ impl From<USB_DEVICE_DESCRIPTOR> for DeviceDescriptor {
             product: src.iProduct,
             serial_number: src.iSerialNumber,
             num_configurations: src.bNumConfigurations,
+        }
+    }
+}
+
+impl From<USB_INTERFACE_DESCRIPTOR> for InterfaceDescriptor {
+    fn from(src: USB_INTERFACE_DESCRIPTOR) -> InterfaceDescriptor {
+        InterfaceDescriptor {
+            length: src.bLength,
+            descriptor_type: src.bDescriptorType,
+            interface_number: src.bInterfaceNumber,
+            alternate_setting: src.bAlternateSetting,
+            num_endpoints: src.bNumEndpoints,
+            interface_class: src.bInterfaceClass,
+            interface_subclass: src.bInterfaceSubClass,
+            interface_protocol: src.bInterfaceProtocol,
+            index_interface: src.iInterface,
         }
     }
 }
