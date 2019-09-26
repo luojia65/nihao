@@ -238,6 +238,38 @@ impl<'h> WinUsbInterface<'h> {
         Ok(Some(unsafe { dest.assume_init() }))
     }
 
+    pub fn write_pipe(&self, pipe_index: u8, buf: &[u8]) -> io::Result<usize> {
+        let mut len = mem::MaybeUninit::<DWORD>::uninit();
+        let ans = unsafe { WinUsb_WritePipe(
+            self.winusb_handle,
+            pipe_index,
+            buf.as_ptr() as *mut u8,
+            buf.len() as DWORD,
+            len.as_mut_ptr(),
+            core::ptr::null_mut(),
+        ) }; 
+        if ans == FALSE {
+            return Err(io::Error::last_os_error())
+        }
+        Ok(unsafe { len.assume_init() } as usize)
+    }
+
+    pub fn read_pipe(&self, pipe_index: u8, buf: &mut [u8]) -> io::Result<usize> {
+        let mut len = mem::MaybeUninit::<DWORD>::uninit();
+        let ans = unsafe { WinUsb_ReadPipe(
+            self.winusb_handle,
+            pipe_index,
+            buf.as_ptr() as *mut u8,
+            buf.len() as DWORD,
+            len.as_mut_ptr(),
+            core::ptr::null_mut(),
+        ) }; 
+        if ans == FALSE {
+            return Err(io::Error::last_os_error())
+        }
+        Ok(unsafe { len.assume_init() } as usize)
+    }
+
     // WinUsb_WritePipe with OVERLAPPED
     pub fn write_pipe_overlapped(&self, pipe_index: u8, buf: &[u8])     
         -> io::Result<Pin<Box<OVERLAPPED>>>
