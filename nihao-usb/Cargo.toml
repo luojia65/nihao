@@ -10,6 +10,6 @@ edition = "2018"
 version = "*"
 features = [
     "winbase", "winerror", "errhandlingapi",
-    "handleapi", "fileapi", "heapapi",
+    "handleapi", "fileapi", "heapapi", "synchapi",
     "setupapi", "winusb", "usbspec", "winusbio", "usbiodef",
 ]

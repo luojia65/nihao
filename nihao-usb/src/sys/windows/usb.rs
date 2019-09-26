@@ -23,22 +23,29 @@ use winapi::{
             LANG_NEUTRAL,
         },
         winbase::{FILE_FLAG_OVERLAPPED},
+        minwinbase::{OVERLAPPED},
         fileapi::{CreateFileW, OPEN_EXISTING},
         handleapi::{CloseHandle, INVALID_HANDLE_VALUE},
         errhandlingapi::GetLastError,
+        synchapi::CreateEventW,
         winusb::{
             WinUsb_Initialize, WinUsb_Free,
             WinUsb_GetDescriptor,
             WinUsb_QueryDeviceInformation,
             WinUsb_QueryInterfaceSettings,
             WinUsb_QueryPipe,
+            WinUsb_ReadPipe,
+            WinUsb_WritePipe,
             WINUSB_INTERFACE_HANDLE,
             USB_INTERFACE_DESCRIPTOR,
         },
     },
     shared::{
         minwindef::{FALSE, DWORD, UCHAR},
-        winerror::ERROR_NO_MORE_ITEMS,
+        winerror::{
+            ERROR_NO_MORE_ITEMS,
+            ERROR_IO_PENDING,
+        },
         usbiodef::GUID_DEVINTERFACE_USB_DEVICE,
         usbspec::{
             USB_DEVICE_DESCRIPTOR,
@@ -226,6 +233,69 @@ impl<'h> WinUsbInterface<'h> {
             return Err(io::Error::last_os_error());
         }
         Ok(Some(unsafe { dest.assume_init() }))
+    }
+
+    // WinUsb_WritePipe with OVERLAPPED
+    pub fn write_pipe_overlapped(&self, pipe_index: u8, buf: &[u8])     
+        -> io::Result<OVERLAPPED>
+    {
+        let mut overlapped = mem::MaybeUninit::<OVERLAPPED>::uninit();
+        unsafe { 
+            (*overlapped.as_mut_ptr()).hEvent = CreateEventW(
+                core::ptr::null_mut(),
+                FALSE,
+                FALSE,
+                core::ptr::null_mut(),
+            )
+        };
+        let ans = unsafe { WinUsb_WritePipe(
+            self.winusb_handle,
+            pipe_index,
+            buf.as_ptr() as *mut u8,
+            buf.len() as DWORD,
+            core::ptr::null_mut(),
+            overlapped.as_mut_ptr(),
+        ) }; 
+        if ans == FALSE {
+            if unsafe { GetLastError() } == ERROR_IO_PENDING {
+                return Ok(unsafe { overlapped.assume_init() })
+            }
+            return Err(io::Error::last_os_error())
+        }
+        // todo: check if correct
+        // return Ok(unsafe { overlapped.assume_init() })
+        panic!("returned true for overlapped write")
+    }
+
+    pub fn read_pipe_overlapped(&self, pipe_index: u8, buf: &mut [u8]) 
+        -> io::Result<OVERLAPPED>
+    {
+        let mut overlapped = mem::MaybeUninit::<OVERLAPPED>::uninit();
+        unsafe { 
+            (*overlapped.as_mut_ptr()).hEvent = CreateEventW(
+                core::ptr::null_mut(),
+                FALSE,
+                FALSE,
+                core::ptr::null_mut(),
+            )
+        };
+        let ans = unsafe { WinUsb_ReadPipe(
+            self.winusb_handle,
+            pipe_index,
+            buf.as_ptr() as *mut u8,
+            buf.len() as DWORD,
+            core::ptr::null_mut(),
+            overlapped.as_mut_ptr(),
+        ) }; 
+        if ans == FALSE {
+            if unsafe { GetLastError() } == ERROR_IO_PENDING {
+                return Ok(unsafe { overlapped.assume_init() })
+            }
+            return Err(io::Error::last_os_error())
+        }
+        // todo: check if correct
+        // return Ok(unsafe { overlapped.assume_init() })
+        panic!("returned true for overlapped read")
     }
 }
 

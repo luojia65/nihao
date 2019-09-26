@@ -13,7 +13,7 @@ pub struct InfoHandle<'h> {
     handle_dev_info: HDEVINFO,
     _lifetime_of_handle: PhantomData<&'h ()>
 }
- 
+
 impl<'h> InfoHandle<'h> {
     #[inline]
     pub fn iter<'a>(&self, guid: &GUID) -> InfoIter<'a> {
