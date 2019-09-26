@@ -1,4 +1,5 @@
 pub mod sys;
+pub mod device;
 
 use core::iter::FusedIterator;
 
@@ -29,15 +30,6 @@ impl<'list> DeviceList<'list> {
         self.inner.len()
     } 
 }
-
-// impl<'list> IntoIterator for DeviceList<'list> {
-//     type Item = <device::IntoIter<'list> as Iterator>::Item;
-//     type IntoIter = device::IntoIter<'list>;
-
-//     fn into_iter(self) -> device::IntoIter<'list> {
-//         self.iter() // todo
-//     }
-// }
 
 /// An `Iterator` for USB devices.
 #[derive(Debug, Clone)]

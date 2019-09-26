@@ -1,3 +1,5 @@
+pub mod handle;
+
 use core::{
     iter::FusedIterator,
     convert::TryFrom,
@@ -23,8 +25,6 @@ impl<'list> HandleList<'list> {
         self.inner.len()
     } 
 }
-
-// todo: handle::IntoIter<'iter>
 
 #[derive(Debug, Clone)]
 pub struct Handles<'iter> {
