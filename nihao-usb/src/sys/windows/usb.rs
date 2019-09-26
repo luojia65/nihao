@@ -245,9 +245,7 @@ impl<'h> WinUsbInterface<'h> {
         let mut overlapped = Box::pin(unsafe { 
             mem::MaybeUninit::<OVERLAPPED>::uninit().assume_init()
         });
-        println!("{:p}", &*overlapped);
         overlapped.hEvent = core::ptr::null_mut();
-        println!("Before call!");
         let ans = unsafe { WinUsb_WritePipe(
             self.winusb_handle,
             pipe_index,
@@ -256,14 +254,10 @@ impl<'h> WinUsbInterface<'h> {
             core::ptr::null_mut(),
             &*overlapped as *const _ as *mut _,
         ) }; 
-        println!("After call! {}", ans);
-        println!("write error {}!", unsafe { GetLastError() });
         if ans == FALSE {
             if unsafe { GetLastError() } == ERROR_IO_PENDING {
-        println!("incomplete!");
                 return Ok(overlapped)
             }
-        println!("error {}!", unsafe { GetLastError() });
             return Err(io::Error::last_os_error())
         }
         // todo: check if correct
@@ -277,9 +271,7 @@ impl<'h> WinUsbInterface<'h> {
         let mut overlapped = Box::pin(unsafe { 
             mem::MaybeUninit::<OVERLAPPED>::uninit().assume_init()
         });
-        println!("{:p}", &*overlapped);
         overlapped.hEvent = core::ptr::null_mut();
-        println!("Before call!");
         let ans = unsafe { WinUsb_ReadPipe(
             self.winusb_handle,
             pipe_index,
@@ -288,14 +280,10 @@ impl<'h> WinUsbInterface<'h> {
             core::ptr::null_mut(),
             &*overlapped as *const _ as *mut _,
         ) }; 
-        println!("After call!");
-        println!("read error {}!", unsafe { GetLastError() });
         if ans == FALSE {
             if unsafe { GetLastError() } == ERROR_IO_PENDING {
-        println!("incomplete!");
                 return Ok(overlapped)
             }
-        println!("error {}!", unsafe { GetLastError() });
             return Err(io::Error::last_os_error())
         }
         // todo: check if correct
@@ -306,22 +294,17 @@ impl<'h> WinUsbInterface<'h> {
     pub fn poll_overlapped(&self, overlapped: Pin<&OVERLAPPED>) 
         -> Poll<io::Result<usize>>
     {
-        println!("{:p}", &*overlapped);
         let mut bytes_transferred = mem::MaybeUninit::uninit();
-        println!("before poll!");
         let ans = unsafe { WinUsb_GetOverlappedResult(
             self.winusb_handle,
             &*overlapped as *const _ as *mut _,
             bytes_transferred.as_mut_ptr(),
             FALSE,
         ) };
-        println!("after poll!");
-        println!("poll error {}!", unsafe { GetLastError() });
         if ans == FALSE {
             if unsafe { GetLastError() } == ERROR_IO_INCOMPLETE {
                 return Poll::Pending;
             }
-        println!("error {}!", unsafe { GetLastError() });
             return Poll::Ready(Err(io::Error::last_os_error()))
         }
         return Poll::Ready(Ok(unsafe { bytes_transferred.assume_init() as usize }))

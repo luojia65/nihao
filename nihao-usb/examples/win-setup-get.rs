@@ -17,18 +17,12 @@ fn main() -> io::Result<()> {
                     .map(|d| InterfaceDescriptor::from(d)));
                 println!("=4= Has pipe 2:{}", usb.query_pipe(0, 2).expect("query pipe").is_some());
                 let buf_send: &[u8] = &[
-                    0xF1, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
+                    0xF1, 0x80
                 ];
                 let mut buf_recv = vec![0u8; 1024];
-                println!("= Write!");
                 let ov_write = usb.write_pipe_overlapped(0x02, &buf_send).unwrap();
-                println!("= Read!");
                 let ov_read = usb.read_pipe_overlapped(0x81, &mut buf_recv).unwrap();
-                println!("= Poll write!");
                 while let Poll::Pending = usb.poll_overlapped(ov_write.as_ref()) {}
-                // while let Poll::Pending = usb.poll_overlapped(&ov_read) {}
-                println!("= Poll read!");
                 loop {
                     if let Poll::Ready(len) = usb.poll_overlapped(ov_read.as_ref()) {
                         let len = len.unwrap();
