@@ -44,12 +44,12 @@ use winapi::{
     },
 };
 
-pub trait ListOptionsExt<'h> {
-    fn all_usb_interfaces() -> setup::ListOptions<setup::Interface, InfoHandle<'h>>;
+pub trait ListOptionsExt<'g, 'h> {
+    fn all_usb_interfaces() -> setup::ListOptions<'g, setup::Interface, InfoHandle<'h>>;
 }
 
-impl<'h> ListOptionsExt<'h> for setup::ListOptions<setup::Interface, InfoHandle<'h>> {
-    fn all_usb_interfaces() -> setup::ListOptions<setup::Interface, InfoHandle<'h>> {
+impl<'g, 'h> ListOptionsExt<'g, 'h> for setup::ListOptions<'g, setup::Interface, InfoHandle<'h>> {
+    fn all_usb_interfaces() -> setup::ListOptions<'g, setup::Interface, InfoHandle<'h>> {
         setup::ListOptions::interface_by_class(&GUID_DEVINTERFACE_USB_DEVICE)
     }
 }

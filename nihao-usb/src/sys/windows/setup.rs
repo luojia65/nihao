@@ -201,8 +201,9 @@ pub struct Device;
 pub struct Interface;
 
 #[derive(Debug)]
-pub struct ListOptions<TYPE, OUTPUT> {
+pub struct ListOptions<'g, TYPE, OUTPUT> {
     class_guid: *const GUID,
+    _lifetime_of_guid: PhantomData<&'g ()>,
     enumerator: PCWSTR,
     hwnd_parent: HWND,
     flags: DWORD,
@@ -210,11 +211,12 @@ pub struct ListOptions<TYPE, OUTPUT> {
     _typestate_output: PhantomData<OUTPUT>,
 }
 
-impl<TYPE, OUTPUT> ListOptions<TYPE, OUTPUT> {
+impl<TYPE, OUTPUT> ListOptions<'_, TYPE, OUTPUT> {
     #[inline]
     pub const unsafe fn new_unchecked() -> Self {
         Self {
             class_guid: ptr::null(),
+            _lifetime_of_guid: PhantomData,
             enumerator: ptr::null(),
             hwnd_parent: ptr::null_mut(),
             flags: 0,
@@ -260,7 +262,7 @@ impl<TYPE, OUTPUT> ListOptions<TYPE, OUTPUT> {
     }
 }
 
-impl<'h, TYPE, OUTPUT> ListOptions<TYPE, OUTPUT> 
+impl<'h, TYPE, OUTPUT> ListOptions<'_, TYPE, OUTPUT> 
 where 
     OUTPUT: From<InfoHandle<'h>>
 {
@@ -285,11 +287,12 @@ where
     }
 }
 
-impl<OUTPUT> ListOptions<Device, OUTPUT> {
+impl<'g, OUTPUT> ListOptions<'g, Device, OUTPUT> {
     #[inline]
-    pub const fn all_devices() -> ListOptions<Device, OUTPUT> {
+    pub const fn all_devices() -> ListOptions<'g, Device, OUTPUT> {
         Self {
             class_guid: ptr::null(),
+            _lifetime_of_guid: PhantomData,
             enumerator: ptr::null(),
             hwnd_parent: ptr::null_mut(),
             flags: DIGCF_ALLCLASSES,
@@ -299,9 +302,10 @@ impl<OUTPUT> ListOptions<Device, OUTPUT> {
     }
 
     #[inline]
-    pub const fn device_by_class(class_guid: &GUID) -> Self {
+    pub const fn device_by_class(class_guid: &'g GUID) -> Self {
         Self {
             class_guid: class_guid as *const _,
+            _lifetime_of_guid: PhantomData,
             enumerator: ptr::null(),
             hwnd_parent: ptr::null_mut(),
             flags: 0,
@@ -311,11 +315,12 @@ impl<OUTPUT> ListOptions<Device, OUTPUT> {
     }
 }
 
-impl<OUTPUT> ListOptions<Interface, OUTPUT> {
+impl<'g, OUTPUT> ListOptions<'g, Interface, OUTPUT> {
     #[inline]
-    pub const fn all_interfaces() -> ListOptions<Interface, OUTPUT> {
+    pub const fn all_interfaces() -> ListOptions<'g, Interface, OUTPUT> {
         Self {
             class_guid: ptr::null(),
+            _lifetime_of_guid: PhantomData,
             enumerator: ptr::null(),
             hwnd_parent: ptr::null_mut(),
             flags: DIGCF_DEVICEINTERFACE | DIGCF_ALLCLASSES,
@@ -325,9 +330,10 @@ impl<OUTPUT> ListOptions<Interface, OUTPUT> {
     }
 
     #[inline]
-    pub const fn interface_by_class(class_guid: &GUID) -> ListOptions<Interface, OUTPUT> {
+    pub const fn interface_by_class(class_guid: &'g GUID) -> ListOptions<'g, Interface, OUTPUT> {
         Self {
             class_guid: class_guid as *const _,
+            _lifetime_of_guid: PhantomData,
             enumerator: ptr::null(),
             hwnd_parent: ptr::null_mut(),
             flags: DIGCF_DEVICEINTERFACE,
