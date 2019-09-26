@@ -1,6 +1,7 @@
 use nihao_usb::sys::windows::{setup::ListOptions, usb::ListOptionsExt};
 use nihao_usb::{DeviceDescriptor, InterfaceDescriptor};
 use std::io;
+use core::task::Poll;
 
 fn main() -> io::Result<()> {
     let info_handle = ListOptions::all_usb_interfaces()
@@ -20,10 +21,17 @@ fn main() -> io::Result<()> {
                     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
                 ];
                 let mut buf_recv = vec![0u8; 1024];
-                let _ov_read = usb.read_pipe_overlapped(0x81, &mut buf_recv).unwrap();
-                let _ov_write = usb.write_pipe_overlapped(0x02, &buf_send).unwrap();
-                std::thread::sleep(std::time::Duration::from_secs(1));
-                println!("{:?}", &buf_recv[..16]);
+                let ov_write = usb.write_pipe_overlapped(0x02, &buf_send).unwrap();
+                while let Poll::Pending = usb.poll_overlapped(&ov_write) {}
+                let ov_read = usb.read_pipe_overlapped(0x81, &mut buf_recv).unwrap();
+                loop {
+                    if let Poll::Ready(len) = usb.poll_overlapped(&ov_read) {
+                        let len = len.unwrap();
+                        println!("Bytes read: {:?}", len);
+                        println!("{:?}", &buf_recv[..len]);
+                        break;
+                    }
+                } 
                 println!("== Finished");
             }
         }

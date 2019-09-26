@@ -4,6 +4,7 @@ use core::{
     iter::FusedIterator,
     marker::PhantomData,
     mem,
+    task::Poll,
 };
 use std::io;
 use super::setup;
@@ -31,6 +32,7 @@ use winapi::{
         winusb::{
             WinUsb_Initialize, WinUsb_Free,
             WinUsb_GetDescriptor,
+            WinUsb_GetOverlappedResult,
             WinUsb_QueryDeviceInformation,
             WinUsb_QueryInterfaceSettings,
             WinUsb_QueryPipe,
@@ -296,6 +298,25 @@ impl<'h> WinUsbInterface<'h> {
         // todo: check if correct
         // return Ok(unsafe { overlapped.assume_init() })
         panic!("returned true for overlapped read")
+    }
+
+    pub fn poll_overlapped(&self, overlapped: &OVERLAPPED) 
+        -> Poll<io::Result<usize>>
+    {
+        let mut bytes_transferred = mem::MaybeUninit::uninit();
+        let ans = unsafe { WinUsb_GetOverlappedResult(
+            self.winusb_handle,
+            overlapped as *const _ as *mut _,
+            bytes_transferred.as_mut_ptr(),
+            FALSE,
+        ) };
+        if ans == FALSE {
+            if unsafe { GetLastError() } == ERROR_IO_PENDING {
+                return Poll::Pending;
+            }
+            return Poll::Ready(Err(io::Error::last_os_error()))
+        }
+        return Poll::Ready(Ok(unsafe { bytes_transferred.assume_init() as usize }))
     }
 }
 
