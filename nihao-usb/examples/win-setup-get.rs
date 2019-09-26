@@ -14,6 +14,7 @@ fn main() -> io::Result<()> {
                 println!("Speed: {:?}", usb.speed());
                 println!("Interface 0: {:?}", usb.interface_settings(0).unwrap()
                     .map(|d| InterfaceDescriptor::from(d)));
+                println!("Has pipe 2:{}", usb.query_pipe(0, 2).expect("query pipe").is_some());
             }
         }
     }

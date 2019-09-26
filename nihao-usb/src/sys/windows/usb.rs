@@ -31,6 +31,7 @@ use winapi::{
             WinUsb_GetDescriptor,
             WinUsb_QueryDeviceInformation,
             WinUsb_QueryInterfaceSettings,
+            WinUsb_QueryPipe,
             WINUSB_INTERFACE_HANDLE,
             USB_INTERFACE_DESCRIPTOR,
         },
@@ -47,6 +48,7 @@ use winapi::{
         },
         winusbio::{
             DEVICE_SPEED,
+            WINUSB_PIPE_INFORMATION,
         },
     },
 };
@@ -142,7 +144,7 @@ impl<'h> WinUsbInterface<'h> {
     }
 
     pub fn device_descriptor(&self) -> io::Result<USB_DEVICE_DESCRIPTOR> {
-        let mut desc = mem::MaybeUninit::<USB_DEVICE_DESCRIPTOR>::uninit();
+        let mut dest = mem::MaybeUninit::<USB_DEVICE_DESCRIPTOR>::uninit();
         let len = 0;
         // This function not only fails when handle is null (which is impossible here),
         // but also fails when there being an error while reading.
@@ -153,14 +155,14 @@ impl<'h> WinUsbInterface<'h> {
             USB_DEVICE_DESCRIPTOR_TYPE,
             0,
             LANG_NEUTRAL,
-            desc.as_mut_ptr() as *mut u8,
+            dest.as_mut_ptr() as *mut u8,
             core::mem::size_of::<USB_DEVICE_DESCRIPTOR>() as DWORD,
             &len as *const _ as *mut _
         ) };
         if ans == FALSE {
             return Err(io::Error::last_os_error())
         }
-        Ok(unsafe { desc.assume_init() })
+        Ok(unsafe { dest.assume_init() })
     }
 
     pub fn speed(&self) -> io::Result<USB_DEVICE_SPEED> {
@@ -188,12 +190,12 @@ impl<'h> WinUsbInterface<'h> {
     pub fn interface_settings(&self, interface_number: u8) 
         -> io::Result<Option<USB_INTERFACE_DESCRIPTOR>>
     {
-        let mut desc = mem::MaybeUninit::<USB_INTERFACE_DESCRIPTOR>::uninit();
+        let mut dest = mem::MaybeUninit::<USB_INTERFACE_DESCRIPTOR>::uninit();
         let ans = unsafe {
             WinUsb_QueryInterfaceSettings(
                 self.winusb_handle,
                 interface_number,
-                desc.as_mut_ptr()
+                dest.as_mut_ptr()
             )
         };
         if ans == FALSE {
@@ -202,7 +204,28 @@ impl<'h> WinUsbInterface<'h> {
             }
             return Err(io::Error::last_os_error());
         }
-        Ok(Some(unsafe { desc.assume_init() }))
+        Ok(Some(unsafe { dest.assume_init() }))
+    }
+
+    pub fn query_pipe(&self, interface_number: u8, pipe_index: u8) 
+        -> io::Result<Option<WINUSB_PIPE_INFORMATION>>
+    {
+        let mut dest = mem::MaybeUninit::<WINUSB_PIPE_INFORMATION>::uninit();
+        let ans = unsafe {
+            WinUsb_QueryPipe(
+                self.winusb_handle,
+                interface_number,
+                pipe_index,
+                dest.as_mut_ptr()
+            )
+        };
+        if ans == FALSE {
+            if unsafe { GetLastError() } == ERROR_NO_MORE_ITEMS {
+                return Ok(None);
+            }
+            return Err(io::Error::last_os_error());
+        }
+        Ok(Some(unsafe { dest.assume_init() }))
     }
 }
 
