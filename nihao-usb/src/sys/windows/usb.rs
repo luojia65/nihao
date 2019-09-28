@@ -200,14 +200,14 @@ impl<'h> WinUsbInterface<'h> {
         Ok(device_speed.into())
     }
 
-    pub fn interface_settings(&self, interface_number: u8) 
+    pub fn interface_settings(&self, alternate_interface_number: u8) 
         -> io::Result<Option<USB_INTERFACE_DESCRIPTOR>>
     {
         let mut dest = mem::MaybeUninit::<USB_INTERFACE_DESCRIPTOR>::uninit();
         let ans = unsafe {
             WinUsb_QueryInterfaceSettings(
                 self.winusb_handle,
-                interface_number,
+                alternate_interface_number,
                 dest.as_mut_ptr()
             )
         };
