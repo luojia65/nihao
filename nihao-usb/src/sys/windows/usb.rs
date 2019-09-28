@@ -38,6 +38,9 @@ use winapi::{
             WinUsb_QueryPipe,
             WinUsb_ReadPipe,
             WinUsb_WritePipe,
+            WinUsb_FlushPipe,
+            WinUsb_ResetPipe,
+            WinUsb_AbortPipe,
             WINUSB_INTERFACE_HANDLE,
             USB_INTERFACE_DESCRIPTOR,
         },
@@ -268,6 +271,39 @@ impl<'h> WinUsbInterface<'h> {
             return Err(io::Error::last_os_error())
         }
         Ok(unsafe { len.assume_init() } as usize)
+    }
+
+    pub fn flush_pipe(&self, pipe_index: u8) -> io::Result<()> {
+        let ans = unsafe { WinUsb_FlushPipe (
+            self.winusb_handle,
+            pipe_index,
+        ) };
+        if ans == FALSE {
+            return Err(io::Error::last_os_error())
+        }
+        Ok(())
+    }
+
+    pub fn reset_pipe(&self, pipe_index: u8) -> io::Result<()> {
+        let ans = unsafe { WinUsb_ResetPipe (
+            self.winusb_handle,
+            pipe_index,
+        ) };
+        if ans == FALSE {
+            return Err(io::Error::last_os_error())
+        }
+        Ok(())
+    }
+
+    pub fn abort_pipe(&self, pipe_index: u8) -> io::Result<()> {
+        let ans = unsafe { WinUsb_AbortPipe (
+            self.winusb_handle,
+            pipe_index,
+        ) };
+        if ans == FALSE {
+            return Err(io::Error::last_os_error())
+        }
+        Ok(())
     }
 
     // WinUsb_WritePipe with OVERLAPPED

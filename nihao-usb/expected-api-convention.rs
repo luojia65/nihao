@@ -83,7 +83,7 @@ let cnt = usb::devices()?.filter_vid_pid(0x0483, 0x3748)
         let handle = handle?;
         block_on!(|| {
             handle.write_pipe(0x02, &[0xF7, 0x00, 0x00, 0x00])?;
-            handle.read_pipe(&mut buf)?;
+            handle.read_pipe(0x81, &mut buf)?;
         });
         let r1 = u32::from_le_bytes([buf[0], buf[1], buf[2], buf[3]]);
         let r2 = u32::from_le_bytes([buf[4], buf[5], buf[6], buf[7]]);
