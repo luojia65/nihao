@@ -1,5 +1,7 @@
 pub mod sys;
 pub mod device;
+pub mod context;
+pub mod error;
 
 use core::iter::FusedIterator;
 

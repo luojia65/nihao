@@ -7,7 +7,7 @@ edition = "2018"
 [dependencies]
 
 [target.'cfg(windows)'.dependencies.winapi]
-version = "*"
+version = "0.3"
 features = [
     "winbase", "winerror", "errhandlingapi",
     "handleapi", "fileapi", "heapapi",
