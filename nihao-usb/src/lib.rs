@@ -1,6 +1,5 @@
 pub mod sys;
 pub mod device;
-pub mod backend;
 pub mod error;
 
 use core::iter::FusedIterator;
