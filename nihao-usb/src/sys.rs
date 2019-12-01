@@ -2,4 +2,4 @@
 pub mod windows;
 
 #[cfg(any(windows, doc))]
-pub use windows::{devices, DeviceList, Devices, Device, Handle};
+pub use windows::{devices, DeviceList, Devices, DeviceIntoIter, Device, Handle};

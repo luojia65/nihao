@@ -1,5 +1,4 @@
 pub mod sys;
-pub mod device;
 pub mod error;
 
 use core::iter::FusedIterator;
@@ -47,6 +46,29 @@ impl<'iter> Iterator for Devices<'iter> {
 }
 
 impl FusedIterator for Devices<'_> {}
+
+/// An owned iterator for USB devices.
+#[derive(Debug, Clone)]
+pub struct DeviceIntoIter<'iter> {
+    inner: sys::DeviceIntoIter<'iter>,
+}
+
+impl<'list> IntoIterator for DeviceList<'list> {
+    type Item = io::Result<Device<'list>>;
+    type IntoIter = DeviceIntoIter<'list>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        DeviceIntoIter { inner: self.inner.into_iter() }
+    }
+}
+
+impl<'iter> Iterator for DeviceIntoIter<'iter> {
+    type Item = io::Result<Device<'iter>>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.inner.next().map(|res| res.map(|inner| Device { inner }))
+    }
+}
 
 /// A path struct representing a certain USB device connected to underlying OS.
 #[derive(Debug, Clone, Hash, Eq, PartialEq)]

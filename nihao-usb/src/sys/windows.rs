@@ -33,6 +33,37 @@ impl<'list> DeviceList<'list> {
 }
 
 #[derive(Debug, Clone)]
+pub struct DeviceIntoIter<'iter> {
+    iter: Devices<'iter>,
+    list: core::mem::ManuallyDrop<DeviceList<'iter>>,
+}
+
+impl<'list> IntoIterator for DeviceList<'list> {
+    type Item = io::Result<Device<'list>>;
+    type IntoIter = DeviceIntoIter<'list>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        let iter = self.iter();
+        let list = core::mem::ManuallyDrop::new(self);
+        DeviceIntoIter { iter, list }
+    }
+}
+
+impl<'iter> Drop for DeviceIntoIter<'iter> {
+    fn drop(&mut self) {
+        unsafe { core::mem::ManuallyDrop::drop(&mut self.list) };
+    }
+}
+
+impl<'iter> Iterator for DeviceIntoIter<'iter> {
+    type Item = io::Result<Device<'iter>>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.iter.next()
+    }
+}
+
+#[derive(Debug, Clone)]
 pub struct Devices<'iter> {
     iter: usb::InfoIter<'iter>,
 }
