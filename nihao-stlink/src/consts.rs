@@ -8,6 +8,7 @@ pub const STLINK_CMD_SIZE_V2: usize = 16;
  
 pub const STLINK_GET_VERSION: u8 = 0xF1;
 pub const STLINK_DEBUG_COMMAND: u8 = 0xF2;
+pub const STLINK_GET_CURRENT_MODE: u8 = 0xF5;
 pub const STLINK_GET_TARGET_VOLTAGE: u8 = 0xF7;
 
 pub const STLINK_DEBUG_APIV2_RESETSYS: u8 = 0x32;

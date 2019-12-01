@@ -1,6 +1,7 @@
 pub mod handle;
 pub mod version;
 pub mod consts;
+pub mod command;
 
 pub use handle::Handle;
 

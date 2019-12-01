@@ -18,10 +18,6 @@ pub struct Handle<'h> {
 }
 
 impl<'h> Handle<'h> {
-    pub fn into_inner(self) -> nihao_usb::Handle<'h> {
-        self.inner
-    }
-
     pub fn version(&self) -> Version {
         self.version
     }
@@ -30,11 +26,7 @@ impl<'h> Handle<'h> {
         if !self.version.has_trace {
             return Ok(None);
         }
-        let mut s = vec![0u8; STLINK_CMD_SIZE_V2];
-        s[0] = STLINK_GET_TARGET_VOLTAGE;
-        let mut r = vec![0u8; 8];
-        self.as_ref().write_pipe(STLINK_TX_EP, &s)?;
-        self.as_ref().read_pipe(STLINK_RX_EP, &mut r)?;
+        let r = crate::command::command(&self.inner, STLINK_GET_TARGET_VOLTAGE, 0, 8)?;
         let adc_result = [
             u32::from_le_bytes([r[0], r[1], r[2], r[3]]),
             u32::from_le_bytes([r[4], r[5], r[6], r[7]]),
@@ -45,7 +37,19 @@ impl<'h> Handle<'h> {
             0.0 
         } ))
     }
+
+    pub fn get_mode(&self) -> io::Result<u8> {
+        let r = crate::command::command(&self.inner, STLINK_GET_CURRENT_MODE, 0, 2)?;
+        Ok(r[0])
+    }
 }
+
+// //todo: bug?
+// impl Drop for Handle<'_> {
+//     fn drop(&mut self) {
+//         crate::command::command(&self.inner, STLINK_DEBUG_APIV2_RESETSYS, 0x80, 2).unwrap();
+//     }
+// }
 
 impl<'h> AsRef<nihao_usb::Handle<'h>> for Handle<'h> {
     fn as_ref(&self) -> &nihao_usb::Handle<'h> {

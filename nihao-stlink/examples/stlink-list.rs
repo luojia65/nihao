@@ -17,7 +17,8 @@ fn main() -> io::Result<()> {
 
 fn print_one(handle: &nihao_stlink::Handle) {
     println!("{}", handle.version());
-    if let Ok(Some(voltage)) = handle.get_voltage() {
-        println!("Target voltage: {:?}", voltage)
-    }
+    // if let Ok(Some(voltage)) = handle.get_voltage() {
+    //     println!("Target voltage: {:?}", voltage)
+    // } // bug?
+    println!("Current mode: {:?}", handle.get_mode());
 }
