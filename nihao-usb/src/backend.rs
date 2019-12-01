@@ -1,3 +1,6 @@
+#[cfg(any(windows, doc))]
+pub mod winusb;
+
 use core::result;
 use core::iter;
 use core::time::Duration;

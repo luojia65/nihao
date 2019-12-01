@@ -1,5 +1,5 @@
-#[cfg(windows)]
+#[cfg(any(windows, doc))]
 pub mod windows;
 
-#[cfg(windows)]
+#[cfg(any(windows, doc))]
 pub use windows::{devices, DeviceList, Devices, Device, Handle};
