@@ -32,7 +32,7 @@ pub trait Host<'lt> {
 
     // get all devices available on this setup context
     // this is alike 
-    fn available() -> Result<Self::List, Self::Error>;
+    fn available(&self) -> Result<Self::List, Self::Error>;
 
     // owned ref to device handle for reading
     // maybe a winusb handle on windows, file handle on linux
@@ -40,7 +40,7 @@ pub trait Host<'lt> {
     type Handle;
 
     // open detected device into a handle
-    fn open(device: Self::Device) -> Result<Self::Handle, Self::Error>;
+    fn open(&self, device: Self::Device) -> Result<Self::Handle, Self::Error>;
 }
 
 pub trait Input {
