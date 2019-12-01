@@ -3,9 +3,14 @@ pub const ENDPOINT_OUT: u8 = 0x00;
 pub const STLINK_RX_EP: u8 = 1 | ENDPOINT_IN;
 pub const STLINK_TX_EP: u8 = 2 | ENDPOINT_OUT;
 pub const STLINK_TRACE_EP: u8 = 3 | ENDPOINT_IN;
+
+pub const STLINK_CMD_SIZE_V2: usize = 16;
  
-pub const STLINK_GET_VERSION: &'static [u8] = &[0xF1];
-pub const STLINK_GET_TARGET_VOLTAGE: &'static [u8] = &[0xF7];
+pub const STLINK_GET_VERSION: u8 = 0xF1;
+pub const STLINK_DEBUG_COMMAND: u8 = 0xF2;
+pub const STLINK_GET_TARGET_VOLTAGE: u8 = 0xF7;
+
+pub const STLINK_DEBUG_APIV2_RESETSYS: u8 = 0x32;
 
 pub const STLINK_VID: u16 = 0x0483;
 pub const STLINK_V1_PID: u16 = 0x3744;

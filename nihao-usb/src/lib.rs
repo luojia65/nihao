@@ -107,6 +107,10 @@ impl<'handle> Handle<'handle> {
     pub fn write_pipe(&self, pipe_index: u8, buf: &[u8]) -> io::Result<usize> {
         self.inner.write_pipe(pipe_index, buf)
     }
+    
+    pub fn flush_pipe(&self, pipe_index: u8) -> io::Result<()> {
+        self.inner.flush_pipe(pipe_index)
+    }
 }
 
 /// A `DeviceDescriptor` describing what this name represents in the USB specification

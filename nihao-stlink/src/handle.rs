@@ -30,8 +30,10 @@ impl<'h> Handle<'h> {
         if !self.version.has_trace {
             return Ok(None);
         }
+        let mut s = vec![0u8; STLINK_CMD_SIZE_V2];
+        s[0] = STLINK_GET_TARGET_VOLTAGE;
         let mut r = vec![0u8; 8];
-        self.as_ref().write_pipe(STLINK_TX_EP, STLINK_GET_TARGET_VOLTAGE)?;
+        self.as_ref().write_pipe(STLINK_TX_EP, &s)?;
         self.as_ref().read_pipe(STLINK_RX_EP, &mut r)?;
         let adc_result = [
             u32::from_le_bytes([r[0], r[1], r[2], r[3]]),
@@ -89,6 +91,7 @@ impl<'h> TryFrom<nihao_usb::Handle<'h>> for Handle<'h> {
         if desc.id_vendor != STLINK_VID || desc.id_product != STLINK_V2_PID {
             return Err((src, InvalidVendorProductId(desc.id_vendor, desc.id_product)))
         }
+        // get version
         let version = match crate::version::read_handle(&src) {
             Ok(ver) => ver,
             Err(err) => return Err((src, err.into())),

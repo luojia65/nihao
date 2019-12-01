@@ -63,7 +63,10 @@ impl fmt::Display for JtagApi {
 
 pub(crate) fn read_handle(handle: &nihao_usb::Handle<'_>) -> io::Result<Version> {
     let mut buf_recv = vec![0u8; 6];
-    handle.write_pipe(STLINK_TX_EP, STLINK_GET_VERSION)?;
+    let mut buf_send = vec![0u8; STLINK_CMD_SIZE_V2];
+    buf_send[0] = STLINK_GET_VERSION; 
+    // todo: we should use overlapped api (async await)
+    handle.write_pipe(STLINK_TX_EP, &buf_send)?;
     let _len = handle.read_pipe(STLINK_RX_EP, &mut buf_recv)?;
     let version = u16::from_be_bytes([buf_recv[0], buf_recv[1]]);
     let v = (version >> 12) & 0x0f;
