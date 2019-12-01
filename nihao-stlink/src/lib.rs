@@ -65,10 +65,7 @@ impl DeviceExt for nihao_usb::Device {
     fn open_stlink(&self) -> result::Result<Handle, OpenError> {
         use OpenError::*;
         let src = self.open()?;
-        let desc = match src.device_descriptor() {
-            Ok(desc) => desc,
-            Err(err) => return Err(err.into()),
-        };
+        let desc = src.device_descriptor()?;
         if desc.id_vendor != STLINK_VID || desc.id_product != STLINK_V2_PID {
             return Err(InvalidVendorProductId(desc.id_vendor, desc.id_product))
         }
@@ -76,7 +73,6 @@ impl DeviceExt for nihao_usb::Device {
         Ok(ans)
     }
 }
-
 
 /// A handle of a device connection. 
 /// 
