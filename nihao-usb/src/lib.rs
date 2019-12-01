@@ -1,5 +1,4 @@
 pub mod sys;
-pub mod device;
 pub mod backend;
 pub mod error;
 
@@ -23,14 +22,13 @@ pub struct DeviceList {
     inner: sys::DeviceList
 }
 
-impl DeviceList {
-    pub fn iter(&self) -> Devices {
-        Devices { inner: self.inner.iter() }
-    }
+impl IntoIterator for DeviceList {
+    type Item = <Devices as Iterator>::Item;
+    type IntoIter = Devices;
 
-    pub fn len(&self) -> usize {
-        self.inner.len()
-    } 
+    fn into_iter(self) -> Devices {
+        Devices { inner: self.inner.into_iter() }
+    }
 }
 
 /// An `Iterator` for USB devices.

@@ -15,8 +15,8 @@ pub struct InfoHandle {
 
 impl InfoHandle {
     #[inline]
-    pub fn iter(&self, guid: &GUID) -> InfoIter {
-        InfoIter::from_handle_guid(self.handle_dev_info, guid)
+    pub fn into_iter(&self, guid: &GUID) -> InfoIntoIter {
+        InfoIntoIter::from_handle_guid(self.handle_dev_info, guid)
     }
 }
 
@@ -61,11 +61,11 @@ impl fmt::Debug for Info {
     }
 }
 
-/// This iterator also manages a tiny heap buffer
+/// Owned iterator of `Info`; also manages a tiny heap buffer
 /// 
 /// TODO: is this exact sized?
 #[derive(Clone)]
-pub struct InfoIter {
+pub struct InfoIntoIter {
     handle_dev_info: HDEVINFO, // maybe reused, do NOT free here
     iter_index: DWORD,
     interface_class_guid: *const GUID, // must be non-null
@@ -75,9 +75,9 @@ pub struct InfoIter {
     detail_cap: DWORD,
 }
 
-impl InfoIter {
-    fn from_handle_guid(handle_dev_info: HDEVINFO, guid: &GUID) -> InfoIter {
-        InfoIter {
+impl InfoIntoIter {
+    fn from_handle_guid(handle_dev_info: HDEVINFO, guid: &GUID) -> InfoIntoIter {
+        InfoIntoIter {
             handle_dev_info: handle_dev_info,
             iter_index: 0,
             interface_class_guid: guid as *const _,
@@ -89,9 +89,9 @@ impl InfoIter {
     }
 }
 
-impl fmt::Debug for InfoIter {
+impl fmt::Debug for InfoIntoIter {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        f.debug_struct("InfoIter")
+        f.debug_struct("InfoIntoIter")
             .field("handle_dev_info", &self.handle_dev_info)
             .field("iter_index", &self.iter_index)
             .field("detail_ptr", &self.detail_ptr)
@@ -110,7 +110,7 @@ fn create_sp_dev_interface_data() -> SP_DEVICE_INTERFACE_DATA {
     ans
 }
 
-impl Drop for InfoIter {
+impl Drop for InfoIntoIter {
     fn drop(&mut self) {
         if self.detail_ptr != core::ptr::null_mut() {
             let heap_handle = unsafe { GetProcessHeap() };
@@ -119,7 +119,7 @@ impl Drop for InfoIter {
     }
 }
 
-impl Iterator for InfoIter {
+impl Iterator for InfoIntoIter {
     type Item = io::Result<Info>;
 
     #[inline]
@@ -186,7 +186,7 @@ impl Iterator for InfoIter {
     }
 }
 
-impl FusedIterator for InfoIter {}
+impl FusedIterator for InfoIntoIter {}
 
 /// Typestate struct
 pub struct Device;

@@ -15,13 +15,9 @@ pub struct HandleList {
 }
 
 impl HandleList {
-    pub fn iter<'iter>(&self) -> Handles {
-        Handles { inner: self.inner.iter() }
+    pub fn into_iter(self) -> Handles {
+        Handles { inner: self.inner.into_iter() }
     }
-
-    pub fn len(&self) -> usize {
-        self.inner.len()
-    } 
 }
 
 #[derive(Debug, Clone)]

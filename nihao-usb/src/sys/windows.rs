@@ -22,19 +22,18 @@ impl From<usb::InfoHandle> for DeviceList {
     }
 }
 
-impl DeviceList {
-    pub fn iter(&self) -> Devices {
-        Devices { iter: self.info_handle.iter() }
-    }
+impl IntoIterator for DeviceList {
+    type Item = <Devices as Iterator>::Item;
+    type IntoIter = Devices;
 
-    pub fn len(&self) -> usize {
-        self.iter().count()
-    } 
+    fn into_iter(self) -> Devices {
+        Devices { iter: self.info_handle.into_iter() }
+    }
 }
 
 #[derive(Debug, Clone)]
 pub struct Devices {
-    iter: usb::InfoIter,
+    iter: usb::InfoIntoIter,
 }
 
 impl<'iter> Iterator for Devices {

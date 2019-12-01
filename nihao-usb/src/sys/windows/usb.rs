@@ -86,18 +86,21 @@ impl From<setup::InfoHandle> for InfoHandle {
     }
 }
 
-impl InfoHandle {
-    pub fn iter(&self) -> InfoIter {
-        InfoIter { inner: self.inner.iter(&GUID_DEVINTERFACE_USB_DEVICE) }
+impl IntoIterator for InfoHandle {
+    type Item = <InfoIntoIter as Iterator>::Item;
+    type IntoIter = InfoIntoIter;
+
+    fn into_iter(self) -> InfoIntoIter {
+        InfoIntoIter { inner: self.inner.into_iter(&GUID_DEVINTERFACE_USB_DEVICE) }
     }
 }
 
 #[derive(Debug, Clone)]
-pub struct InfoIter {
-    inner: setup::InfoIter,
+pub struct InfoIntoIter {
+    inner: setup::InfoIntoIter,
 }
 
-impl Iterator for InfoIter {
+impl Iterator for InfoIntoIter {
     type Item = io::Result<Info>;
 
     #[inline]
@@ -106,7 +109,7 @@ impl Iterator for InfoIter {
     }
 }
 
-impl FusedIterator for InfoIter {}
+impl FusedIterator for InfoIntoIter {}
 
 #[derive(Debug, Clone, Hash, Eq, PartialEq)]
 pub struct Info {

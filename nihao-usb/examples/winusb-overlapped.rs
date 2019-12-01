@@ -7,7 +7,7 @@ fn main() -> io::Result<()> {
     let info_handle = ListOptions::all_usb_interfaces()
         .present()
         .list()?;
-    for info in info_handle.iter() {
+    for info in info_handle {
         if let Ok(info) = info {
             if let Ok(usb) = info.open() {
                 // println!("=1= Device: {:?}", usb.device_descriptor()
