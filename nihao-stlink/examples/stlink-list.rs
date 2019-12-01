@@ -6,11 +6,18 @@ fn main() -> io::Result<()> {
         match handle {
             Ok(handle) => {
                 println!("Desc: {:?}", handle.as_ref().device_descriptor());
-                println!("{}", handle.version());
+                print_one(&handle);
             },
             Err(e) => println!("Error: {:?}", e)
         }
     }
     println!("Finished");
     Ok(())
+}
+
+fn print_one(handle: &nihao_stlink::Handle) {
+    println!("{}", handle.version());
+    if let Ok(Some(voltage)) = handle.get_voltage() {
+        println!("Target voltage: {:?}", voltage)
+    }
 }

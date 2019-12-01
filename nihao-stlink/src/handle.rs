@@ -25,6 +25,24 @@ impl<'h> Handle<'h> {
     pub fn version(&self) -> Version {
         self.version
     }
+
+    pub fn get_voltage(&self) -> io::Result<Option<f32>> {
+        if !self.version.has_trace {
+            return Ok(None);
+        }
+        let mut r = vec![0u8; 8];
+        self.as_ref().write_pipe(STLINK_TX_EP, STLINK_GET_TARGET_VOLTAGE)?;
+        self.as_ref().read_pipe(STLINK_RX_EP, &mut r)?;
+        let adc_result = [
+            u32::from_le_bytes([r[0], r[1], r[2], r[3]]),
+            u32::from_le_bytes([r[4], r[5], r[6], r[7]]),
+        ];
+        Ok(Some(if adc_result[0] != 0 {
+            2.0 * (adc_result[1] as f32) * 1.2 / (adc_result[0] as f32)
+        } else { 
+            0.0 
+        } ))
+    }
 }
 
 impl<'h> AsRef<nihao_usb::Handle<'h>> for Handle<'h> {

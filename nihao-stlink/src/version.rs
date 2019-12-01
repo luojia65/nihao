@@ -4,19 +4,19 @@ use core::fmt;
 
 #[derive(Debug, Clone, Copy, Hash, Eq, PartialEq)]
 pub struct Version {
-    stlink_version: u8,
-    jtag_api: JtagApi,
-    jtag: u8,
-    swim: u8,
-    msd: u8,
-    bridge: u8,
-    vid: u16,
-    pid: u16,
-    has_trace: bool,
-    has_get_last_rwstatus2: bool,
-    has_swd_set_freq: bool,
-    has_jtag_set_freq: bool,
-    has_mem_16bit: bool,
+    pub stlink_version: u8,
+    pub jtag_api: JtagApi,
+    pub jtag: u8,
+    pub swim: u8,
+    pub msd: u8,
+    pub bridge: u8,
+    pub vid: u16,
+    pub pid: u16,
+    pub has_trace: bool,
+    pub has_get_last_rwstatus2: bool,
+    pub has_swd_set_freq: bool,
+    pub has_jtag_set_freq: bool,
+    pub has_mem_16bit: bool,
 }
 
 impl fmt::Display for Version {
