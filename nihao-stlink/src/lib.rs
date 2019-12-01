@@ -1,57 +1,89 @@
 use core::{
     iter::FusedIterator,
-    convert::TryFrom,
     fmt,
+    result
 };
-use std::io;
 
-pub fn handles<'iter>() -> io::Result<HandleList> {
-    nihao_usb::devices().map(|inner| HandleList { inner })
+#[cfg(not(no_std))]
+pub fn handles<'iter>() -> nihao_usb::Result<List> {
+    nihao_usb::devices().map(|inner| List { inner })
 }
 
-#[derive(Debug, Clone)]
-pub struct HandleList {
-    inner: nihao_usb::DeviceList,
+#[derive(Debug)]
+pub struct List {
+    inner: nihao_usb::List,
 }
 
-impl HandleList {
-    pub fn into_iter(self) -> Handles {
-        Handles { inner: self.inner.into_iter() }
-    }
+#[derive(Debug)]
+pub struct IntoIter {
+    inner: nihao_usb::IntoIter,
 }
 
-#[derive(Debug, Clone)]
-pub struct Handles {
-    inner: nihao_usb::Devices,
-}
-
-impl Iterator for Handles {
-    type Item = io::Result<Handle>;
+impl Iterator for IntoIter {
+    type Item = result::Result<Handle, OpenError>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        use TryFromHandleError::*;
-        
+        use OpenError::*;
         while let Some(Ok(usb_device)) = self.inner.next() {
-            // unable to open, continue
-            let h = if let Ok(h) = usb_device.open() { h } else { continue };
-            match Handle::try_from(h) {
+            match usb_device.open_stlink() {
                 Ok(h) => return Some(Ok(h)),
-                Err((_h, IoError(e))) => return Some(Err(e)),
-                Err(_) => continue,
+                Err(UsbError(e)) => return Some(Err(e.into())),
+                Err(_) => continue, // unable to open, continue
             }
         }
         None
     }
 }
 
-impl FusedIterator for Handles {}
+impl FusedIterator for IntoIter {}
+
+pub trait DeviceExt {
+    fn open_stlink(&self) -> result::Result<Handle, OpenError>;
+}
+
+#[derive(Debug)]
+pub enum OpenError {
+    InvalidVendorProductId(u16, u16),
+    UsbError(nihao_usb::Error),
+}
+
+impl std::error::Error for OpenError {}
+
+impl fmt::Display for OpenError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{:?}", self)
+    }
+}
+
+impl From<nihao_usb::Error> for OpenError {
+    fn from(src: nihao_usb::Error) -> Self {
+        OpenError::UsbError(src)
+    }
+}
+
+impl DeviceExt for nihao_usb::Device {
+    fn open_stlink(&self) -> result::Result<Handle, OpenError> {
+        use OpenError::*;
+        let src = self.open()?;
+        let desc = match src.device_descriptor() {
+            Ok(desc) => desc,
+            Err(err) => return Err(err.into()),
+        };
+        if desc.id_vendor != STLINK_VID || desc.id_product != STLINK_V2_PID {
+            return Err(InvalidVendorProductId(desc.id_vendor, desc.id_product))
+        }
+        let ans = Handle { inner: src, version: Version {} };
+        Ok(ans)
+    }
+}
+
 
 /// A handle of a device connection. 
 /// 
 /// The connection between the programmer and the system may break at any time. 
 /// When this happens, methods of `Handle` should return `Err` values other than 
 /// normal `Ok` with results.
-#[derive(Debug, Clone, Hash, Eq, PartialEq)]
+#[derive(Debug)] // , Hash, Eq, PartialEq
 pub struct Handle {
     inner: nihao_usb::Handle,
     version: Version,
@@ -69,49 +101,6 @@ impl Handle {
 
 const STLINK_VID: u16 = 0x0483;
 const STLINK_V2_PID: u16 = 0x3748;
-
-#[derive(Debug)]
-pub enum TryFromHandleError {
-    InvalidVendorProductId(u16, u16),
-    IoError(io::Error),
-}
-
-impl std::error::Error for TryFromHandleError {}
-
-impl fmt::Display for TryFromHandleError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{:?}", self)
-    }
-}
-
-impl From<io::Error> for TryFromHandleError {
-    fn from(src: io::Error) -> TryFromHandleError {
-        TryFromHandleError::IoError(src)
-    }
-}
-
-impl From<TryFromHandleError> for io::Error {
-    fn from(src: TryFromHandleError) -> io::Error {
-        io::Error::new(io::ErrorKind::Other, src)
-    }
-}
-
-impl TryFrom<nihao_usb::Handle> for Handle {
-    type Error = (nihao_usb::Handle, TryFromHandleError);
-
-    fn try_from(src: nihao_usb::Handle) -> Result<Handle, Self::Error> {
-        use TryFromHandleError::*;
-        let desc = match src.device_descriptor() {
-            Ok(desc) => desc,
-            Err(err) => return Err((src, err.into())),
-        };
-        if desc.id_vendor != STLINK_VID || desc.id_product != STLINK_V2_PID {
-            return Err((src, InvalidVendorProductId(desc.id_vendor, desc.id_product)))
-        }
-        let ans = Handle { inner: src, version: Version {} };
-        Ok(ans)
-    }
-}
 
 #[derive(Debug, Clone, Copy, Hash, Eq, PartialEq)]
 pub struct Version {

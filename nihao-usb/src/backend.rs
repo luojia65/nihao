@@ -1,25 +1,21 @@
+pub mod dummy;
+
 #[cfg(any(windows, doc))]
 pub mod winusb;
 
 use core::iter;
-use core::time::Duration;
 
 // host context. usually a pc, mac or embedded chips with usb otg.
-pub trait Host<'lt> {
+pub trait Host {
     // owned buffer to device path or repr struct
     // usually being able to clone
     // maybe a path string struct on windows & linux
-    type Device: 'lt;    
+    type Device;    
 
     // owned list containing all paths
     type List: iter::IntoIterator<
         Item = Result<Self::Device, Self::Error>,
         IntoIter = Self::IntoIter,
-    >;
-
-    // ref to an iterator containing all paths
-    type Iter: iter::Iterator<
-        Item = Result<&'lt Self::Device, Self::Error>,
     >;
 
     // owned iterator containing all paths

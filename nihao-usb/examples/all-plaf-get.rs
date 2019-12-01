@@ -1,6 +1,4 @@
-use std::io;
-
-fn main() -> io::Result<()> {
+fn main() -> nihao_usb::Result<()> {
     let mut i = 0;
     for device in nihao_usb::devices()? {
         i += 1;
