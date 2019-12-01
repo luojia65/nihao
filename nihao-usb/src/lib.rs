@@ -99,6 +99,14 @@ impl<'handle> Handle<'handle> {
     pub fn speed(&self) -> io::Result<crate::Speed>  {
         self.inner.speed()
     }
+
+    pub fn read_pipe(&self, pipe_index: u8, buf: &mut [u8]) -> io::Result<usize> {
+        self.inner.read_pipe(pipe_index, buf)
+    }
+
+    pub fn write_pipe(&self, pipe_index: u8, buf: &[u8]) -> io::Result<usize> {
+        self.inner.write_pipe(pipe_index, buf)
+    }
 }
 
 /// A `DeviceDescriptor` describing what this name represents in the USB specification
