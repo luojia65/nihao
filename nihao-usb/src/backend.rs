@@ -46,6 +46,8 @@ pub trait Host<'lt> {
 pub trait Input {
     // error that may occur
     type Error;
+
+    type Duration;
     
     fn read_control(
         &mut self,
@@ -54,21 +56,21 @@ pub trait Input {
         value: u16,
         index: u16,
         buf: &mut [u8],
-        timeout: Duration
+        timeout: Self::Duration
     ) -> Result<usize, Self::Error>;
 
     fn read_interrupt(
         &mut self, 
         endpoint: u8, 
         buf: &mut [u8], 
-        timeout: Duration
+        timeout: Self::Duration
     ) -> Result<usize, Self::Error>;
 
     fn read_bulk(
         &mut self,
         endpoint: u8,
         buf: &mut [u8],
-        timeout: Duration
+        timeout: Self::Duration
     ) -> Result<usize, Self::Error>;
 }
 
@@ -85,6 +87,8 @@ pub trait Output {
     // error that may occur
     type Error;
 
+    type Duration;
+
     fn write_control(
         &mut self,
         request_type: u8,
@@ -92,21 +96,21 @@ pub trait Output {
         value: u16,
         index: u16,
         buf: &[u8],
-        timeout: Duration
+        timeout: Self::Duration
     ) -> Result<usize, Self::Error>;
 
     fn write_interrupt(
         &mut self,
         endpoint: u8,
         buf: &[u8],
-        timeout: Duration
+        timeout: Self::Duration
     ) -> Result<usize, Self::Error>;
 
     fn write_bulk(
         &mut self,
         endpoint: u8,
         buf: &[u8],
-        timeout: Duration
+        timeout: Self::Duration
     ) -> Result<usize, Self::Error>;
 }
 
