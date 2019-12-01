@@ -14,17 +14,17 @@ use std::io;
 /// if you want to iterate everything in it by using `for` statements. 
 /// That's because a `Result` is also an `Iterator`, and its `Item` is `Devices`
 /// other than `Device` expected.
-pub fn devices<'list>() -> io::Result<DeviceList<'list>> {
+pub fn devices() -> io::Result<DeviceList> {
     sys::devices().map(|inner| DeviceList { inner })
 }
 
 #[derive(Debug, Clone)]
-pub struct DeviceList<'list> {
-    inner: sys::DeviceList<'list>
+pub struct DeviceList {
+    inner: sys::DeviceList
 }
 
-impl<'list> DeviceList<'list> {
-    pub fn iter<'iter>(&self) -> Devices<'iter> {
+impl DeviceList {
+    pub fn iter(&self) -> Devices {
         Devices { inner: self.inner.iter() }
     }
 
@@ -35,28 +35,28 @@ impl<'list> DeviceList<'list> {
 
 /// An `Iterator` for USB devices.
 #[derive(Debug, Clone)]
-pub struct Devices<'iter> {
-    inner: sys::Devices<'iter>,
+pub struct Devices {
+    inner: sys::Devices,
 }
 
-impl<'iter> Iterator for Devices<'iter> {
-    type Item = io::Result<Device<'iter>>;
+impl Iterator for Devices {
+    type Item = io::Result<Device>;
 
     fn next(&mut self) -> Option<Self::Item> {
         self.inner.next().map(|res| res.map(|inner| Device { inner }))
     }
 }
 
-impl FusedIterator for Devices<'_> {}
+impl FusedIterator for Devices {}
 
 /// A path struct representing a certain USB device connected to underlying OS.
 #[derive(Debug, Clone, Hash, Eq, PartialEq)]
-pub struct Device<'device> {
-    inner: sys::Device<'device>,
+pub struct Device {
+    inner: sys::Device,
 }
 
-impl<'device> Device<'device> {
-    pub fn open<'handle>(&self) -> io::Result<Handle<'handle>> {
+impl Device {
+    pub fn open(&self) -> io::Result<Handle> {
         self.inner.open().map(|inner| Handle { inner })
     }
 }
@@ -66,11 +66,11 @@ impl<'device> Device<'device> {
 /// Underlying code must ensure that this handle implements `Drop` and all relevant
 /// resources are freed during their `drop` operations.
 #[derive(Debug, Clone, Hash, Eq, PartialEq)]
-pub struct Handle<'handle> {
-    inner: sys::Handle<'handle>,
+pub struct Handle {
+    inner: sys::Handle,
 }
 
-impl<'handle> Handle<'handle> {
+impl Handle {
     pub fn device_descriptor(&self) -> io::Result<DeviceDescriptor> {
         self.inner.device_descriptor()
     }

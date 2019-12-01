@@ -2,7 +2,6 @@
 
 use core::{
     iter::FusedIterator,
-    marker::PhantomData,
     mem,
     task::Poll,
     pin::Pin,
@@ -66,40 +65,40 @@ use winapi::{
     },
 };
 
-pub trait ListOptionsExt<'g, 'h> {
-    fn all_usb_interfaces() -> setup::ListOptions<'g, setup::Interface, InfoHandle<'h>>;
+pub trait ListOptionsExt<'g> {
+    fn all_usb_interfaces() -> setup::ListOptions<'g, setup::Interface, InfoHandle>;
 }
 
-impl<'g, 'h> ListOptionsExt<'g, 'h> for setup::ListOptions<'g, setup::Interface, InfoHandle<'h>> {
-    fn all_usb_interfaces() -> setup::ListOptions<'g, setup::Interface, InfoHandle<'h>> {
+impl<'g> ListOptionsExt<'g> for setup::ListOptions<'g, setup::Interface, InfoHandle> {
+    fn all_usb_interfaces() -> setup::ListOptions<'g, setup::Interface, InfoHandle> {
         setup::ListOptions::interface_by_class(&GUID_DEVINTERFACE_USB_DEVICE)
     }
 }
 
 #[derive(Debug, Clone, Hash, Eq, PartialEq)]
-pub struct InfoHandle<'h> {
-    inner: setup::InfoHandle<'h>,
+pub struct InfoHandle {
+    inner: setup::InfoHandle,
 }
 
-impl<'h> From<setup::InfoHandle<'h>> for InfoHandle<'h> {
-    fn from(src: setup::InfoHandle<'h>) -> InfoHandle {
+impl From<setup::InfoHandle> for InfoHandle {
+    fn from(src: setup::InfoHandle) -> InfoHandle {
         InfoHandle { inner: src }
     }
 }
 
-impl<'h> InfoHandle<'h> {
-    pub fn iter<'a>(&self) -> InfoIter<'a> {
+impl InfoHandle {
+    pub fn iter(&self) -> InfoIter {
         InfoIter { inner: self.inner.iter(&GUID_DEVINTERFACE_USB_DEVICE) }
     }
 }
 
 #[derive(Debug, Clone)]
-pub struct InfoIter<'iter> {
-    inner: setup::InfoIter<'iter>,
+pub struct InfoIter {
+    inner: setup::InfoIter,
 }
 
-impl<'iter> Iterator for InfoIter<'iter> {
-    type Item = io::Result<Info<'iter>>;
+impl Iterator for InfoIter {
+    type Item = io::Result<Info>;
 
     #[inline]
     fn next(&mut self) -> Option<Self::Item> {
@@ -107,15 +106,15 @@ impl<'iter> Iterator for InfoIter<'iter> {
     }
 }
 
-impl<'iter> FusedIterator for InfoIter<'iter> {}
+impl FusedIterator for InfoIter {}
 
 #[derive(Debug, Clone, Hash, Eq, PartialEq)]
-pub struct Info<'a> {
-    inner: setup::Info<'a>,
+pub struct Info {
+    inner: setup::Info,
 }
 
-impl<'a> Info<'a> {
-    pub fn open<'h>(&self) -> io::Result<WinUsbInterface<'h>> {
+impl Info {
+    pub fn open(&self) -> io::Result<WinUsbInterface> {
         let device_handle = unsafe { CreateFileW(
             self.inner.path_ptr(),
             GENERIC_READ | GENERIC_WRITE,
@@ -143,16 +142,15 @@ impl<'a> Info<'a> {
 }
 
 #[derive(Debug, Clone, Hash, Eq, PartialEq)]
-pub struct WinUsbInterface<'h> {
+pub struct WinUsbInterface {
     device_handle: HANDLE,
     winusb_handle: WINUSB_INTERFACE_HANDLE,
-    _lifetime_of_handles: PhantomData<&'h ()>,
 }
 
-impl<'h> WinUsbInterface<'h> {
+impl WinUsbInterface {
     fn new(device_handle: HANDLE, winusb_handle: WINUSB_INTERFACE_HANDLE) -> Self {
         WinUsbInterface {
-            device_handle, winusb_handle, _lifetime_of_handles: PhantomData
+            device_handle, winusb_handle
         }
     }
 
@@ -379,7 +377,7 @@ impl<'h> WinUsbInterface<'h> {
     }
 }
 
-impl Drop for WinUsbInterface<'_> {
+impl Drop for WinUsbInterface {
     fn drop(&mut self) {
         unsafe { 
             // reversed free order in destructor

@@ -1,5 +1,3 @@
-pub mod handle;
-
 use core::{
     iter::FusedIterator,
     convert::TryFrom,
@@ -7,17 +5,17 @@ use core::{
 };
 use std::io;
 
-pub fn handles<'iter>() -> io::Result<HandleList<'iter>> {
+pub fn handles<'iter>() -> io::Result<HandleList> {
     nihao_usb::devices().map(|inner| HandleList { inner })
 }
 
 #[derive(Debug, Clone)]
-pub struct HandleList<'list> {
-    inner: nihao_usb::DeviceList<'list>,
+pub struct HandleList {
+    inner: nihao_usb::DeviceList,
 }
 
-impl<'list> HandleList<'list> {
-    pub fn iter<'iter>(&self) -> Handles<'iter> {
+impl HandleList {
+    pub fn iter<'iter>(&self) -> Handles {
         Handles { inner: self.inner.iter() }
     }
 
@@ -27,12 +25,12 @@ impl<'list> HandleList<'list> {
 }
 
 #[derive(Debug, Clone)]
-pub struct Handles<'iter> {
-    inner: nihao_usb::Devices<'iter>,
+pub struct Handles {
+    inner: nihao_usb::Devices,
 }
 
-impl<'iter> Iterator for Handles<'iter> {
-    type Item = io::Result<Handle<'iter>>;
+impl Iterator for Handles {
+    type Item = io::Result<Handle>;
 
     fn next(&mut self) -> Option<Self::Item> {
         use TryFromHandleError::*;
@@ -50,7 +48,7 @@ impl<'iter> Iterator for Handles<'iter> {
     }
 }
 
-impl FusedIterator for Handles<'_> {}
+impl FusedIterator for Handles {}
 
 /// A handle of a device connection. 
 /// 
@@ -58,13 +56,13 @@ impl FusedIterator for Handles<'_> {}
 /// When this happens, methods of `Handle` should return `Err` values other than 
 /// normal `Ok` with results.
 #[derive(Debug, Clone, Hash, Eq, PartialEq)]
-pub struct Handle<'h> {
-    inner: nihao_usb::Handle<'h>,
+pub struct Handle {
+    inner: nihao_usb::Handle,
     version: Version,
 }
 
-impl<'h> Handle<'h> {
-    pub fn into_inner(self) -> nihao_usb::Handle<'h> {
+impl Handle {
+    pub fn into_inner(self) -> nihao_usb::Handle {
         self.inner
     }
 
@@ -102,10 +100,10 @@ impl From<TryFromHandleError> for io::Error {
     }
 }
 
-impl<'h> TryFrom<nihao_usb::Handle<'h>> for Handle<'h> {
-    type Error = (nihao_usb::Handle<'h>, TryFromHandleError);
+impl TryFrom<nihao_usb::Handle> for Handle {
+    type Error = (nihao_usb::Handle, TryFromHandleError);
 
-    fn try_from(src: nihao_usb::Handle<'h>) -> Result<Handle<'h>, Self::Error> {
+    fn try_from(src: nihao_usb::Handle) -> Result<Handle, Self::Error> {
         use TryFromHandleError::*;
         let desc = match src.device_descriptor() {
             Ok(desc) => desc,
