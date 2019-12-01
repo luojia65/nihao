@@ -1,7 +1,7 @@
 use std::io;
 
 fn main() -> io::Result<()> {
-    for device in nihao_usb::sys::windows::devices()? {
+    for device in nihao_usb::sys::windows::devices()?.iter() {
         if let Ok(handle) = device?.open() {
             let buf_send = [0xF1u8, 0x80];
             let mut buf_recv = vec![0u8; 1024];

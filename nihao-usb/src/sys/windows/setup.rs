@@ -9,18 +9,19 @@ use winapi::{
 pub use winapi::um::setupapi::HDEVINFO;
 
 #[derive(Debug, Clone, Hash, Eq, PartialEq)]
-pub struct InfoHandle {
+pub struct InfoHandle<'h> {
     handle_dev_info: HDEVINFO,
+    _lifetime_of_handle: PhantomData<&'h ()>
 }
 
-impl InfoHandle {
+impl<'h> InfoHandle<'h> {
     #[inline]
-    pub fn into_iter(&self, guid: &GUID) -> InfoIntoIter {
-        InfoIntoIter::from_handle_guid(self.handle_dev_info, guid)
+    pub fn iter<'a>(&self, guid: &GUID) -> InfoIter<'a> {
+        InfoIter::from_handle_guid(self.handle_dev_info, guid)
     }
 }
 
-impl Drop for InfoHandle {
+impl<'h> Drop for InfoHandle<'h> {
     #[inline]
     fn drop(&mut self) {
         // println!("Drop called");
@@ -29,16 +30,18 @@ impl Drop for InfoHandle {
 }
 
 #[derive(Clone, Hash, Eq, PartialEq)]
-pub struct Info {
+pub struct Info<'p> {
     path_ptr: LPCWSTR,
     path_len_in_u16: DWORD,
+    _lifetime_of_path: PhantomData<&'p ()>,
 }
 
-impl Info {
+impl<'p> Info<'p> {
     fn from_device_path(path_ptr: LPCWSTR, path_len_in_u16: DWORD) -> Self {
         Info {
             path_ptr,
             path_len_in_u16,
+            _lifetime_of_path: PhantomData,
         }
     }
 
@@ -55,43 +58,47 @@ impl Info {
     }
 }
 
-impl fmt::Debug for Info {
+impl fmt::Debug for Info<'_> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{:?}", self.to_os_string())
     }
 }
 
-/// Owned iterator of `Info`; also manages a tiny heap buffer
+/// This iterator also manages a tiny heap buffer
 /// 
 /// TODO: is this exact sized?
 #[derive(Clone)]
-pub struct InfoIntoIter {
+pub struct InfoIter<'iter> {
     handle_dev_info: HDEVINFO, // maybe reused, do NOT free here
     iter_index: DWORD,
     interface_class_guid: *const GUID, // must be non-null
+    _lifetime_of_guid: PhantomData<&'iter ()>,
     dev_interface_data: SP_DEVICE_INTERFACE_DATA,
     detail_ptr: PSP_DEVICE_INTERFACE_DETAIL_DATA_W, 
     detail_len: DWORD, // size in u8, not in u16
     detail_cap: DWORD,
+    _lifetime_of_detail: PhantomData<&'iter ()>,
 }
 
-impl InfoIntoIter {
-    fn from_handle_guid(handle_dev_info: HDEVINFO, guid: &GUID) -> InfoIntoIter {
-        InfoIntoIter {
+impl<'iter> InfoIter<'iter> {
+    fn from_handle_guid(handle_dev_info: HDEVINFO, guid: &GUID) -> InfoIter<'iter> {
+        InfoIter {
             handle_dev_info: handle_dev_info,
             iter_index: 0,
             interface_class_guid: guid as *const _,
+            _lifetime_of_guid: PhantomData,
             dev_interface_data: create_sp_dev_interface_data(),
             detail_ptr: core::ptr::null_mut(),
             detail_len: 0,
             detail_cap: 0,
+            _lifetime_of_detail: PhantomData,
         }
     }
 }
 
-impl fmt::Debug for InfoIntoIter {
+impl fmt::Debug for InfoIter<'_> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        f.debug_struct("InfoIntoIter")
+        f.debug_struct("InfoIter")
             .field("handle_dev_info", &self.handle_dev_info)
             .field("iter_index", &self.iter_index)
             .field("detail_ptr", &self.detail_ptr)
@@ -110,7 +117,7 @@ fn create_sp_dev_interface_data() -> SP_DEVICE_INTERFACE_DATA {
     ans
 }
 
-impl Drop for InfoIntoIter {
+impl<'iter> Drop for InfoIter<'iter> {
     fn drop(&mut self) {
         if self.detail_ptr != core::ptr::null_mut() {
             let heap_handle = unsafe { GetProcessHeap() };
@@ -119,8 +126,8 @@ impl Drop for InfoIntoIter {
     }
 }
 
-impl Iterator for InfoIntoIter {
-    type Item = io::Result<Info>;
+impl<'iter> Iterator for InfoIter<'iter> {
+    type Item = io::Result<Info<'iter>>;
 
     #[inline]
     fn next(&mut self) -> Option<Self::Item> {
@@ -186,7 +193,7 @@ impl Iterator for InfoIntoIter {
     }
 }
 
-impl FusedIterator for InfoIntoIter {}
+impl<'iter> FusedIterator for InfoIter<'iter> {}
 
 /// Typestate struct
 pub struct Device;
@@ -256,9 +263,9 @@ impl<TYPE, OUTPUT> ListOptions<'_, TYPE, OUTPUT> {
     }
 }
 
-impl<TYPE, OUTPUT> ListOptions<'_, TYPE, OUTPUT> 
+impl<'h, TYPE, OUTPUT> ListOptions<'_, TYPE, OUTPUT> 
 where 
-    OUTPUT: From<InfoHandle>
+    OUTPUT: From<InfoHandle<'h>>
 {
     #[inline]
     pub fn list(&self) -> io::Result<OUTPUT> {
@@ -273,7 +280,10 @@ where
         if handle_dev_info == INVALID_HANDLE_VALUE {
             Err(io::Error::last_os_error())
         } else {
-            Ok(OUTPUT::from(InfoHandle { handle_dev_info }))
+            Ok(OUTPUT::from(InfoHandle { 
+                handle_dev_info,
+                _lifetime_of_handle: PhantomData 
+            }))
         }
     }
 }

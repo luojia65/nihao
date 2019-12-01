@@ -3,7 +3,7 @@ pub mod usb;
 
 use std::io;
 
-pub fn devices() -> io::Result<DeviceList> {
+pub fn devices<'list>() -> io::Result<DeviceList<'list>> {
     use usb::ListOptionsExt;
     let handle = setup::ListOptions::all_usb_interfaces()
         .present()
@@ -12,32 +12,33 @@ pub fn devices() -> io::Result<DeviceList> {
 }
 
 #[derive(Debug, Clone)]
-pub struct DeviceList {
-    info_handle: usb::InfoHandle,
+pub struct DeviceList<'list> {
+    info_handle: usb::InfoHandle<'list>,
 }
 
-impl From<usb::InfoHandle> for DeviceList {
+impl<'list> From<usb::InfoHandle<'list>> for DeviceList<'list> {
     fn from(src: usb::InfoHandle) -> DeviceList {
         DeviceList { info_handle: src }
     }
 }
 
-impl IntoIterator for DeviceList {
-    type Item = <Devices as Iterator>::Item;
-    type IntoIter = Devices;
-
-    fn into_iter(self) -> Devices {
-        Devices { iter: self.info_handle.into_iter() }
+impl<'list> DeviceList<'list> {
+    pub fn iter<'iter>(&self) -> Devices<'iter> {
+        Devices { iter: self.info_handle.iter() }
     }
+
+    pub fn len(&self) -> usize {
+        self.iter().count()
+    } 
 }
 
 #[derive(Debug, Clone)]
-pub struct Devices {
-    iter: usb::InfoIntoIter,
+pub struct Devices<'iter> {
+    iter: usb::InfoIter<'iter>,
 }
 
-impl<'iter> Iterator for Devices {
-    type Item = io::Result<Device>;
+impl<'iter> Iterator for Devices<'iter> {
+    type Item = io::Result<Device<'iter>>;
     
     fn next(&mut self) -> Option<Self::Item> {
         self.iter.next().map(|res| res.map(|info| Device { info }))
@@ -45,22 +46,22 @@ impl<'iter> Iterator for Devices {
 }
 
 #[derive(Debug, Clone, Hash, Eq, PartialEq)]
-pub struct Device {
-    info: usb::Info,
+pub struct Device<'device> {
+    info: usb::Info<'device>,
 }
 
-impl Device {
-    pub fn open(&self) -> io::Result<Handle> {
+impl<'device> Device<'device> {
+    pub fn open<'handle>(&self) -> io::Result<Handle<'handle>> {
         self.info.open().map(|handle| Handle { winusb_interface: handle })
     }
 }
 
 #[derive(Debug, Clone, Hash, Eq, PartialEq)]
-pub struct Handle {
-    winusb_interface: usb::WinUsbInterface
+pub struct Handle<'handle> {
+    winusb_interface: usb::WinUsbInterface<'handle>
 }
 
-impl Handle {
+impl Handle<'_> {
     pub fn device_descriptor(&self) -> io::Result<crate::DeviceDescriptor> {
         self.winusb_interface.device_descriptor().map(|s| s.into())
     }

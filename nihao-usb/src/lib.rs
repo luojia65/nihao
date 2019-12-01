@@ -1,9 +1,84 @@
-pub mod backend;
-
-#[cfg(not(no_std))]
 pub mod sys;
-#[cfg(not(no_std))]
-pub use sys::{devices, Error, Result, List, IntoIter, Device, Handle};
+pub mod device;
+pub mod backend;
+pub mod error;
+
+use core::iter::FusedIterator;
+
+use std::io;
+
+/// Get an `Iterator` over all USB devices identified by your operating system.
+/// 
+/// Note that the return value for this iterator is a `Result`.
+/// You may need to use a try operator `?` after the function call `devices()`
+/// if you want to iterate everything in it by using `for` statements. 
+/// That's because a `Result` is also an `Iterator`, and its `Item` is `Devices`
+/// other than `Device` expected.
+pub fn devices<'list>() -> io::Result<DeviceList<'list>> {
+    sys::devices().map(|inner| DeviceList { inner })
+}
+
+#[derive(Debug, Clone)]
+pub struct DeviceList<'list> {
+    inner: sys::DeviceList<'list>
+}
+
+impl<'list> DeviceList<'list> {
+    pub fn iter<'iter>(&self) -> Devices<'iter> {
+        Devices { inner: self.inner.iter() }
+    }
+
+    pub fn len(&self) -> usize {
+        self.inner.len()
+    } 
+}
+
+/// An `Iterator` for USB devices.
+#[derive(Debug, Clone)]
+pub struct Devices<'iter> {
+    inner: sys::Devices<'iter>,
+}
+
+impl<'iter> Iterator for Devices<'iter> {
+    type Item = io::Result<Device<'iter>>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.inner.next().map(|res| res.map(|inner| Device { inner }))
+    }
+}
+
+impl FusedIterator for Devices<'_> {}
+
+/// A path struct representing a certain USB device connected to underlying OS.
+#[derive(Debug, Clone, Hash, Eq, PartialEq)]
+pub struct Device<'device> {
+    inner: sys::Device<'device>,
+}
+
+impl<'device> Device<'device> {
+    pub fn open<'handle>(&self) -> io::Result<Handle<'handle>> {
+        self.inner.open().map(|inner| Handle { inner })
+    }
+}
+
+/// A connection handle to the remote device.
+/// 
+/// Underlying code must ensure that this handle implements `Drop` and all relevant
+/// resources are freed during their `drop` operations.
+#[derive(Debug, Clone, Hash, Eq, PartialEq)]
+pub struct Handle<'handle> {
+    inner: sys::Handle<'handle>,
+}
+
+impl<'handle> Handle<'handle> {
+    pub fn device_descriptor(&self) -> io::Result<DeviceDescriptor> {
+        self.inner.device_descriptor()
+    }
+
+    pub fn speed(&self) -> io::Result<crate::Speed>  {
+        self.inner.speed()
+    }
+}
 
 /// A `DeviceDescriptor` describing what this name represents in the USB specification
 #[derive(Debug, Clone, Hash, Eq, PartialEq)]
